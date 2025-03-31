@@ -11,7 +11,7 @@ public interface ItemRepository {
 
 	Item findById(Long itemId);
 
-	boolean deleteById(Long itemId);
+	void deleteById(Long itemId);
 
 	Collection<Item> findAllByOwner(Long ownerId);
 

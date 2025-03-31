@@ -1,6 +1,7 @@
-package ru.practicum.shareit.user.sevice;
+package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DuplicateEmailException;
 import ru.practicum.shareit.user.dto.NewUserRequest;
@@ -12,6 +13,7 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.Collection;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -19,23 +21,36 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDto create(NewUserRequest request) {
+		log.info("Создание пользователя: {}", request);
 		if (userRepository.isEmailTaken(request.getEmail())) {
 			throw new DuplicateEmailException("Такой email уже используется");
 		}
 
 		User user = UserMapper.mapToUser(request);
 		User createdUser = userRepository.create(user);
+		log.info("Создан пользователь: {}", createdUser);
 
 		return UserMapper.mapToUserDto(createdUser);
 	}
 
 	@Override
 	public UserDto update(Long userId, UpdateUserRequest request) {
+		if (request == null) {
+			throw new IllegalArgumentException("UpdateUserRequest cannot be null");
+		}
 		User existingUser = userRepository.findById(userId);
-		String newEmail = request.getEmail();
 
-		if (newEmail != null && !newEmail.equals(existingUser.getEmail())) {
-			if (userRepository.isEmailTaken(newEmail)) {
+		if (request.getName() != null && request.getName().isBlank()) {
+			throw new IllegalArgumentException("Имя не может быть пустым");
+		}
+
+		if (request.getEmail() != null) {
+			if (request.getEmail().isBlank()) {
+				throw new IllegalArgumentException("Email не может быть пустым");
+			}
+
+			if (!request.getEmail().equals(existingUser.getEmail()) &&
+					userRepository.isEmailTaken(request.getEmail())) {
 				throw new DuplicateEmailException("Такой email уже используется");
 			}
 		}
@@ -48,20 +63,30 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDto findById(Long userId) {
-		User user = userRepository.findById(userId);
+		log.info("Поиск пользователя по id={}", userId);
+		User foundUser = userRepository.findById(userId);
+		log.info("Найден пользователь с id={}: {}", userId, foundUser);
 
-		return UserMapper.mapToUserDto(user);
+		return UserMapper.mapToUserDto(foundUser);
 	}
 
 	@Override
 	public boolean delete(Long userId) {
-		return userRepository.deleteById(userId);
+		log.info("Удаление пользователя по id={}", userId);
+		boolean deletedUser = userRepository.deleteById(userId);
+		log.info("Пользователь {} с id={} удалён", deletedUser, userId);
+
+		return deletedUser;
 	}
 
 	@Override
 	public Collection<UserDto> findAll() {
-		return userRepository.findAll().stream()
+		log.info("Получение всех пользователей");
+		Collection<UserDto> foundUsers = userRepository.findAll().stream()
 				.map(UserMapper::mapToUserDto)
 				.toList();
+		log.info("Найдено {} пользователей: {}", foundUsers.size(), foundUsers);
+
+		return foundUsers;
 	}
 }

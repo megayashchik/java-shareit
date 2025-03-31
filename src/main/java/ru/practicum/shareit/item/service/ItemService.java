@@ -13,7 +13,7 @@ public interface ItemService {
 
 	ItemDto findById(Long itemId);
 
-	boolean delete(Long ownerId, Long itemId);
+	void delete(Long ownerId, Long itemId);
 
 	Collection<ItemDto> findAllByOwner(Long ownerId);
 
