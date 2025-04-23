@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class NewUserRequest {
+public class CreateUserRequest {
 	private Long id;
 
 	@NotBlank(message = "Email не может быть пустым")

@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.NewItemRequest;
-import ru.practicum.shareit.item.dto.UpdateItemRequest;
+import ru.practicum.shareit.item.dto.*;
 import ru.practicum.shareit.item.service.ItemService;
 
 import java.util.Collection;
@@ -22,7 +20,7 @@ public class ItemController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ItemDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
-	                      @Valid @RequestBody NewItemRequest request) {
+	                      @Valid @RequestBody CreateItemRequest request) {
 		log.info("Запрос на добавление новой вещи от пользователя {}: {}", userId, request);
 		ItemDto createdItem = itemService.create(userId, request);
 		log.info("Создана новая вещь: {}", createdItem);
@@ -65,7 +63,7 @@ public class ItemController {
 	@ResponseStatus(HttpStatus.OK)
 	public Collection<ItemDto> findAllByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId) {
 		log.info("Запрос на все вещи от владельца с id={}", ownerId);
-		Collection<ItemDto> allItems = itemService.findAllByOwner(ownerId);
+		Collection<ItemDto> allItems = itemService.findByOwnerId(ownerId);
 		log.info("Список вещей владельца с id={}: {}", ownerId, allItems);
 
 		return allItems;
@@ -79,5 +77,17 @@ public class ItemController {
 		log.info("Список вещей: {}", allItems);
 
 		return allItems;
+	}
+
+	@PostMapping("/{itemId}/comment")
+	@ResponseStatus(HttpStatus.CREATED)
+	public CommentResponse addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
+	                                  @PathVariable Long itemId,
+	                                  @Valid @RequestBody CreateCommentRequest request) {
+		log.info("Запрос на добавление комментария к вещи с id = {} от пользователя с id = {}", itemId, userId);
+		CommentResponse comment = itemService.addComment(userId, itemId, request);
+		log.info("Комментарий добавлен: {}", comment);
+
+		return comment;
 	}
 }

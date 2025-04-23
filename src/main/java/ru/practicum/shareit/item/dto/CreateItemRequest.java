@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class NewItemRequest {
+public class CreateItemRequest {
 	private Long id;
 
 	@NotBlank(message = "Название не может быть пустым")
@@ -18,6 +18,4 @@ public class NewItemRequest {
 	private Boolean available;
 
 	private Long ownerId;
-
-	private Long requestId;
 }

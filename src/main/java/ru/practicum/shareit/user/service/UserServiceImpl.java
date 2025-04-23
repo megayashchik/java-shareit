@@ -6,7 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.DuplicateEmailException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.user.dto.NewUserRequest;
+import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UpdateUserRequest;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public UserDto create(NewUserRequest request) {
+	public UserDto create(CreateUserRequest request) {
 		log.info("Создание пользователя: {}", request);
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос не может быть null");
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
 			throw new DuplicateEmailException("Такой email уже используется");
 		}
 
-		User user = UserMapper.mapToUser(request);
+		User user = UserMapper.mapToUserDto(request);
 		User createdUser = userRepository.save(user);
 		log.info("Создан пользователь: {}", createdUser);
 
