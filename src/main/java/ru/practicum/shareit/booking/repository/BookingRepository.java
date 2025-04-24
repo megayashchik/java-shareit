@@ -49,6 +49,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 	@Query("select b from Booking b where b.item.owner.id = :ownerId and b.status = :status order by b.start desc")
 	List<Booking> findByOwnerAndStatus(Long ownerId, Status status);
 
+	// Дополнительные запросы по бронированиям
 	@Query("select b from Booking b " +
 			"where b.item.id in :itemIds " +
 			"and b.end < :now " +
@@ -62,4 +63,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			"and b.status= :status " +
 			"order by b.start asc")
 	List<Booking> findNextBookingByItemIds(List<Long> itemIds, LocalDateTime now, Status status);
+
+	@Query("select b from Booking b where b.item.id = :itemId and b.start > :now order by b.start asc")
+	List<Booking> findFutureBookings(Long itemId, LocalDateTime now);
+
+	@Query("select b from Booking b " +
+			"where b.item.id = :itemId " +
+			"and b.end < :now " +
+			"and b.status = :status " +
+			"order by b.end desc")
+	List<Booking> findPastBookings(Long itemId, LocalDateTime now, Status status);
+
+	@Query("select b from Booking b " +
+			"where b.item.id = :itemId " +
+			"and b.booker.id = :bookerId " +
+			"and b.status = :status " +
+			"and b.end < :end")
+	List<Booking> findUserBookings(Long itemId, Long bookerId, Status status, LocalDateTime end);
 }

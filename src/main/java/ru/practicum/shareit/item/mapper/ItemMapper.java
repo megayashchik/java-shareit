@@ -4,12 +4,10 @@ import ru.practicum.shareit.booking.dto.BookingResponse;
 import ru.practicum.shareit.item.dto.CommentResponse;
 import ru.practicum.shareit.item.dto.CreateItemRequest;
 import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.UpdateItemRequest;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.List;
-import java.util.Map;
 
 public class ItemMapper {
 
@@ -34,32 +32,14 @@ public class ItemMapper {
 		return itemDto;
 	}
 
-	public static Item updateItemFields(Item item, UpdateItemRequest request) {
-		item.setName(request.getName());
-		item.setDescription(request.getDescription());
-		item.setAvailable(request.getAvailable());
-
-		return item;
-	}
-
-	public static ItemDto mapToItemDtoWithBookingAndComments(Item item,
-	                                                         Map<Long, List<CommentResponse>> comments,
-	                                                         Map<Long, BookingResponse> lastBookings,
-	                                                         Map<Long, BookingResponse> nextBookings) {
+	public static ItemDto mapToItemDtoWithBookingsAndComments(Item item,
+	                                                          BookingResponse lastBooking,
+	                                                          BookingResponse nextBooking,
+	                                                          List<CommentResponse> comments) {
 		ItemDto itemDto = mapToItemDto(item);
-		itemDto.setComments(comments.getOrDefault((item.getId()), List.of()));
-		itemDto.setLastBooking(lastBookings.get(item.getId()));
-		itemDto.setNextBooking(nextBookings.get(item.getId()));
-
-		return itemDto;
-	}
-
-	public static ItemDto mapToItemDtoWithBookings(Item item,
-	                                               BookingResponse last,
-	                                               BookingResponse next) {
-		ItemDto itemDto = mapToItemDto(item);
-		itemDto.setLastBooking(last);
-		itemDto.setNextBooking(next);
+		itemDto.setLastBooking(lastBooking);
+		itemDto.setNextBooking(nextBooking);
+		itemDto.setComments(comments != null ? comments : List.of());
 
 		return itemDto;
 	}
