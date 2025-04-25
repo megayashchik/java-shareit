@@ -1,6 +1,10 @@
 package ru.practicum.shareit.exception;
 
-public class NotBookedException extends RuntimeException{
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.BAD_REQUEST)
+public class NotBookedException extends RuntimeException {
 	public NotBookedException(String message) {
 		super(message);
 	}

@@ -15,5 +15,5 @@ public interface BookingService {
 
 	List<BookingResponse> findAllByBooker(Long userId, State state);
 
-	List<BookingResponse> findAllByOwner(Long userId, State state);
+	List<BookingResponse> findAllByOwner(Long ownerId, State state);
 }

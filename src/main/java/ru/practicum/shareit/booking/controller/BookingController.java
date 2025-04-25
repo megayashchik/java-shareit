@@ -21,23 +21,23 @@ public class BookingController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public BookingResponse create(@RequestHeader("X-Sharer-User-Id") Long  userId,
+	public BookingResponse create(@RequestHeader("X-Sharer-User-Id") Long userId,
 	                              @Valid @RequestBody CreateBookingRequest request) {
 		log.info("Создание запроса от пользователя с id = {}", userId);
 		BookingResponse newBooking = bookingService.create(userId, request);
-		log.info("Создан запрос {}", newBooking);
+		log.info("Создан запрос {} от пользователя с id = {}", newBooking, userId);
 
 		return newBooking;
 	}
 
 	@PatchMapping("/{bookingId}")
 	@ResponseStatus(HttpStatus.OK)
-	public BookingResponse approve(@RequestHeader("X-Sharer-User-Id") Long  userId,
+	public BookingResponse approve(@RequestHeader("X-Sharer-User-Id") Long userId,
 	                               @PathVariable Long bookingId,
 	                               @RequestParam("approved") Boolean approve) {
-		log.info("Подтверждение статуса бронирования id = {}", bookingId);
+		log.info("Подтверждение статуса бронирования с id = {}", bookingId);
 		BookingResponse approvedResponse = bookingService.approveBooking(userId, bookingId, approve);
-		log.info("Подтверждение статуса бронирования завершено, статус бронирования {}", approve);
+		log.info("Подтверждение статуса бронирования с id = {} завершено, статус бронирования {}", bookingId, approve);
 
 		return approvedResponse;
 	}
@@ -46,7 +46,7 @@ public class BookingController {
 	@ResponseStatus(HttpStatus.OK)
 	public BookingResponse findById(@RequestHeader("X-Sharer-User-Id") Long userId,
 	                                @PathVariable Long bookingId) {
-		log.info("Запрос на поиск по бронирования по id = {}", bookingId);
+		log.info("Запрос на поиск бронирования по id = {} от пользователя с id = {}", bookingId, userId);
 		BookingResponse booking = bookingService.findById(userId, bookingId);
 		log.info("Найдено бронирование {}", booking);
 
@@ -56,21 +56,21 @@ public class BookingController {
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<BookingResponse> findAllByBooker(@RequestHeader("X-Sharer-User-Id") Long userId,
-	                                           @RequestParam(defaultValue = "ALL") State state) {
+	                                             @RequestParam(defaultValue = "ALL") State state) {
 		log.info("Получения всех бронирования пользователя с id = {}, и статусом {}", userId, state);
 		List<BookingResponse> bookings = bookingService.findAllByBooker(userId, state);
-		log.info("Получено {} бронирований пользователя", bookings.size());
+		log.info("Получено {} бронирований пользователя с id = {}", bookings.size(), userId);
 
 		return bookings;
 	}
 
 	@GetMapping("/owner")
 	@ResponseStatus(HttpStatus.OK)
-	public List<BookingResponse> findAllByOwner(@RequestHeader("X-Sharer-User-Id") Long userId,
+	public List<BookingResponse> findAllByOwner(@RequestHeader("X-Sharer-User-Id") Long ownerId,
 	                                            @RequestParam(defaultValue = "ALL") State state) {
-		log.info("Получение всех бронирований вещей владельца с id = {}, и статусом {}",  userId, state);
-		List<BookingResponse> bookings = bookingService.findAllByBooker(userId, state);
-		log.info("Получено {} бронирований вещей владельца", bookings.size());
+		log.info("Получение всех бронирований вещей со статусом {} от владельца с id = {}", state, ownerId);
+		List<BookingResponse> bookings = bookingService.findAllByOwner(ownerId, state);
+		log.info("Получено {} бронирований вещей владельца с id = {}", bookings.size(), ownerId);
 
 		return bookings;
 	}

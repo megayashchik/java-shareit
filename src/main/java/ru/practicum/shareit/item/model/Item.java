@@ -10,7 +10,6 @@ import ru.practicum.shareit.user.model.User;
 @Setter
 @Table(name = "items")
 public class Item {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;

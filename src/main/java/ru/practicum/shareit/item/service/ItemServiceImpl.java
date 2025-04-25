@@ -43,7 +43,7 @@ public class ItemServiceImpl implements ItemService {
 
 	@Override
 	@Transactional
-	public ItemDto create(Long userId, CreateItemRequest request) {
+	public ItemResponse create(Long userId, CreateItemRequest request) {
 		log.info("Создание вещи для пользователя с id = {}, запрос: {}", userId, request);
 
 		if (request == null) {
@@ -63,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
 		}
 
 		User foundUser = userRepository.findById(userId).orElseThrow(()
-				-> new NotFoundException("Пользователь не найден"));
+				-> new NotFoundException("Пользователь с id = " + userId + " не найден"));
 		Item item = ItemMapper.mapToItemDto(foundUser, request);
 		Item createdItem = itemRepository.save(item);
 		log.info("Создана вещь: {}", createdItem);
@@ -73,7 +73,7 @@ public class ItemServiceImpl implements ItemService {
 
 	@Override
 	@Transactional
-	public ItemDto update(Long itemId, Long ownerId, UpdateItemRequest request) {
+	public ItemResponse update(Long itemId, Long ownerId, UpdateItemRequest request) {
 		Item item = itemRepository.findById(itemId).orElseThrow(()
 				-> new NotFoundException("Вещь с id = " + itemId + " не найдена"));
 
@@ -131,24 +131,24 @@ public class ItemServiceImpl implements ItemService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public ItemDto findById(Long itemId) {
-		Item item = itemRepository.findById(itemId).orElseThrow(()
-				-> new NotFoundException("Вещь " + itemId + " не найдена"));
+	public ItemResponse findById(Long itemId, Long userId) {
+		Item item = itemRepository.findById(itemId).orElseThrow(() ->
+				new NotFoundException("Вещь " + itemId + " не найдена"));
 		BookingResponse lastBooking = null;
 		BookingResponse nextBooking = null;
 
-		List<Booking> lastBookings = bookingRepository.findPastBookings(itemId,
-				LocalDateTime.now(), Status.APPROVED);
+		if (item.getOwner().getId().equals(userId)) {
+			List<Booking> lastBookings = bookingRepository.findPastBookings(itemId,
+					LocalDateTime.now(), Status.APPROVED);
+			if (!lastBookings.isEmpty()) {
+				lastBooking = BookingMapper.mapToBookingDto(lastBookings.get(0));
+			}
 
-		if (!lastBookings.isEmpty()) {
-			lastBooking = BookingMapper.mapToBookingDto(lastBookings.get(0));
-		}
-
-		List<Booking> nextBookings = bookingRepository.findFutureBookings(itemId,
-				LocalDateTime.now());
-
-		if (!nextBookings.isEmpty()) {
-			nextBooking = BookingMapper.mapToBookingDto(nextBookings.get(0));
+			List<Booking> nextBookings = bookingRepository.findFutureBookings(itemId,
+					LocalDateTime.now());
+			if (!nextBookings.isEmpty()) {
+				nextBooking = BookingMapper.mapToBookingDto(nextBookings.get(0));
+			}
 		}
 
 		List<CommentResponse> comments = CommentMapper.mapToCommentList(commentRepository.findAllByItemId(itemId));
@@ -158,7 +158,7 @@ public class ItemServiceImpl implements ItemService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public List<ItemDto> findByOwnerId(Long ownerId) {
+	public List<ItemResponse> findByOwnerId(Long ownerId) {
 		log.info("Получение списка вещей владельца с id = {}", ownerId);
 		userRepository.findById(ownerId)
 				.orElseThrow(() -> new NotFoundException("Пользователь с id = " + ownerId + " не найден"));
@@ -187,28 +187,29 @@ public class ItemServiceImpl implements ItemService {
 			commentsMap.put(itemId, comments);
 		}
 
-		List<ItemDto> result = new ArrayList<>();
+		List<ItemResponse> result = new ArrayList<>();
 		for (Item item : items) {
-			ItemDto itemDto = ItemMapper.mapToItemDtoWithBookingsAndComments(
+			ItemResponse itemResponse = ItemMapper.mapToItemDtoWithBookingsAndComments(
 					item,
 					lastBookings.get(item.getId()),
 					nextBookings.get(item.getId()),
 					commentsMap.getOrDefault(item.getId(), List.of())
 			);
-			result.add(itemDto);
+			result.add(itemResponse);
 		}
 
 		log.info("Найдено {} вещей владельца с id = {}", items.size(), ownerId);
+
 		return result;
 	}
 
 	@Override
-	public List<ItemDto> findItemsByText(String text) {
+	public List<ItemResponse> findItemsByText(String text) {
 		log.info("Получение списка вещей по тексту: {}", text);
 		if (text == null || text.isBlank()) {
 			return List.of();
 		} else {
-			List<ItemDto> items = itemRepository.findItemsByText(text).stream()
+			List<ItemResponse> items = itemRepository.findItemsByText(text).stream()
 					.map(ItemMapper::mapToItemDto)
 					.toList();
 			log.info("Найдено {} вещей по тексту: {}", items.size(), text);
@@ -220,18 +221,14 @@ public class ItemServiceImpl implements ItemService {
 	@Override
 	@Transactional
 	public CommentResponse addComment(Long userId, Long itemId, CreateCommentRequest request) {
-		log.info("Добавление комментария от пользователя {} к вещи {}", userId, itemId);
-		User author = userRepository.findById(userId).orElseThrow(()
-				-> new NotFoundException("Пользователь с id = " + userId + " не найден"));
-		Item item = itemRepository.findById(itemId).orElseThrow(()
-				-> new NotFoundException("Вещь с id = " + itemId + " не найдена"));
+		log.info("Добавление комментария от пользователя с id = {} к вещи с id = {}", userId, itemId);
+		User author = userRepository.findById(userId).orElseThrow(() ->
+				new NotFoundException("Пользователь с id = " + userId + " не найден"));
+		Item item = itemRepository.findById(itemId).orElseThrow(() ->
+				new NotFoundException("Вещь с id = " + itemId + " не найдена"));
 
 		List<Booking> pastBookings = bookingRepository
-				.findUserBookings(
-						itemId,
-						userId,
-						Status.APPROVED,
-						LocalDateTime.now());
+				.findUserBookings(itemId, userId, Status.APPROVED, LocalDateTime.now());
 		log.info("Прошлые бронирования для пользователя {}: {}", userId, pastBookings);
 
 		if (pastBookings.isEmpty()) {
@@ -240,7 +237,7 @@ public class ItemServiceImpl implements ItemService {
 
 		Comment comment = CommentMapper.mapToComment(author, item, request);
 		Comment savedComment = commentRepository.save(comment);
-		log.info("Сохранен комментарий с ID: {}", savedComment.getId());
+		log.info("Сохранен комментарий с id = : {}", savedComment.getId());
 
 		return CommentMapper.mapToCommentResponse(savedComment);
 	}

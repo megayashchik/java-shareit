@@ -32,7 +32,7 @@ public class BookingServiceImpl implements BookingService {
 	@Override
 	@Transactional
 	public BookingResponse create(Long userId, CreateBookingRequest request) {
-	log.info("Запрос на создание бронирования от пользователя с id = {}", userId);
+		log.info("Запрос на создание бронирования от пользователя с id = {}", userId);
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос на бронирование не может быть пустым");
 		}
@@ -50,7 +50,7 @@ public class BookingServiceImpl implements BookingService {
 		}
 
 		Booking booking = bookingRepository.save(BookingMapper.mapToBooking(request, booker, item));
-      log.info("Создано бронирование от пользователя с id = {}", userId);
+		log.info("Создано бронирование от пользователя с id = {}", userId);
 
 		return BookingMapper.mapToBookingDto(booking);
 	}
@@ -59,7 +59,7 @@ public class BookingServiceImpl implements BookingService {
 	@Transactional
 	public BookingResponse approveBooking(Long userId, Long bookingId, Boolean approve) {
 		log.info("Подтверждение или отклонение запроса на бронирование с id = {} владельца с id = {}",
-																				 bookingId, userId);
+				bookingId, userId);
 		Booking booking = bookingRepository.findById(bookingId)
 				.orElseThrow(() -> new NotFoundException("Бронирование с id = " + bookingId + " не найдено"));
 		Item item = booking.getItem();
@@ -86,7 +86,7 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	public BookingResponse findById(Long userId, Long bookingId) {
-		log.info("Получение бронирования c id = {} пользователя с id = {}", bookingId, userId);
+		log.info("Получение бронирования c id = {} от пользователя с id = {}", bookingId, userId);
 		userRepository.findById(userId)
 				.orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден"));
 		Booking booking = bookingRepository.findById(bookingId)
