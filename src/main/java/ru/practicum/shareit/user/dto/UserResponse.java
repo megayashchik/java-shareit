@@ -3,10 +3,10 @@ package ru.practicum.shareit.user.dto;
 import lombok.Data;
 
 @Data
-public class UserDto {
+public class UserResponse {
 	private Long id;
 
-	private String email;
-
 	private String name;
+
+	private String email;
 }

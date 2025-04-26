@@ -1,40 +1,46 @@
 package ru.practicum.shareit.item.mapper;
 
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.NewItemRequest;
-import ru.practicum.shareit.item.dto.UpdateItemRequest;
+import ru.practicum.shareit.booking.dto.BookingResponse;
+import ru.practicum.shareit.item.dto.CommentResponse;
+import ru.practicum.shareit.item.dto.CreateItemRequest;
+import ru.practicum.shareit.item.dto.ItemResponse;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.user.model.User;
+
+import java.util.List;
 
 public class ItemMapper {
 
-	public static Item mapToItem(Long ownerId, NewItemRequest request) {
+	public static Item mapToItemDto(User owner, CreateItemRequest request) {
 		Item item = new Item();
 		item.setName(request.getName());
 		item.setDescription(request.getDescription());
 		item.setAvailable(request.getAvailable());
-		item.setOwnerId(ownerId);
-		item.setRequestId(request.getRequestId());
+		item.setOwner(owner);
 
 		return item;
 	}
 
-	public static ItemDto mapToItemDto(Item item) {
-		ItemDto itemDto = new ItemDto();
-		itemDto.setId(item.getId());
-		itemDto.setName(item.getName());
-		itemDto.setDescription(item.getDescription());
-		itemDto.setAvailable(item.getAvailable());
-		itemDto.setOwnerId(item.getOwnerId());
-		itemDto.setRequestId(item.getRequestId());
+	public static ItemResponse mapToItemDto(Item item) {
+		ItemResponse itemResponse = new ItemResponse();
+		itemResponse.setId(item.getId());
+		itemResponse.setName(item.getName());
+		itemResponse.setDescription(item.getDescription());
+		itemResponse.setAvailable(item.getAvailable());
+		itemResponse.setOwnerId(item.getOwner().getId());
 
-		return itemDto;
+		return itemResponse;
 	}
 
-	public static Item updateItemFields(Item item, UpdateItemRequest request) {
-		item.setName(request.getName());
-		item.setDescription(request.getDescription());
-		item.setAvailable(request.getAvailable());
+	public static ItemResponse mapToItemDtoWithBookingsAndComments(Item item,
+	                                                               BookingResponse lastBooking,
+	                                                               BookingResponse nextBooking,
+	                                                               List<CommentResponse> comments) {
+		ItemResponse itemResponse = mapToItemDto(item);
+		itemResponse.setLastBooking(lastBooking);
+		itemResponse.setNextBooking(nextBooking);
+		itemResponse.setComments(comments != null ? comments : List.of());
 
-		return item;
+		return itemResponse;
 	}
 }

@@ -31,6 +31,13 @@ public class ErrorHandler {
 		return new ErrorResponse(e.getMessage());
 	}
 
+	@ExceptionHandler(NotBookedException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ErrorResponse handleNotBookedException(final NotBookedException e) {
+		log.error("Ошибка: {}", e.getMessage());
+		return new ErrorResponse(e.getMessage());
+	}
+
 	@ExceptionHandler(Throwable.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ErrorResponse handleThrowable(final Throwable e) {
