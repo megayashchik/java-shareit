@@ -8,7 +8,7 @@ import ru.practicum.shareit.exception.DuplicateEmailException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UpdateUserRequest;
-import ru.practicum.shareit.user.dto.UserResponse;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.mapper.UserMapper;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public UserResponse create(CreateUserRequest request) {
+	public UserDto create(CreateUserRequest request) {
 		log.info("Создание пользователя: {}", request);
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос не может быть null");
@@ -41,7 +41,7 @@ public class UserServiceImpl implements UserService {
 			throw new DuplicateEmailException("Такой email уже используется");
 		}
 
-		User user = UserMapper.mapToUserDto(request);
+		User user = UserMapper.mapToUser(request);
 		User createdUser = userRepository.save(user);
 		log.info("Создан пользователь: {}", createdUser);
 
@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public UserResponse update(Long userId, UpdateUserRequest request) {
+	public UserDto update(Long userId, UpdateUserRequest request) {
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос на обновление не может быть пустым");
 		}
@@ -72,7 +72,7 @@ public class UserServiceImpl implements UserService {
 			}
 		}
 
-		User updatedUser = UserMapper.updateUserFields(existingUser, request);
+		User updatedUser = UserMapper.updateUser(existingUser, request);
 		User savedUser = userRepository.save(updatedUser);
 
 		return UserMapper.mapToUserDto(savedUser);
@@ -89,7 +89,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public UserResponse findById(Long userId) {
+	public UserDto findById(Long userId) {
 		log.info("Поиск пользователя по id = {}", userId);
 		User foundUser = userRepository.findById(userId)
 				.orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден"));
@@ -99,9 +99,9 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public List<UserResponse> findAll() {
+	public List<UserDto> findAll() {
 		log.info("Получение всех пользователей");
-		List<UserResponse> foundUsers = userRepository.findAll().stream()
+		List<UserDto> foundUsers = userRepository.findAll().stream()
 				.map(UserMapper::mapToUserDto)
 				.toList();
 		log.info("Найдено {} пользователей: {}", foundUsers.size(), foundUsers);

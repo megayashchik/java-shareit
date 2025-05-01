@@ -1,16 +1,36 @@
 package ru.practicum.shareit.item.dto;
 
-import lombok.Data;
+import io.micrometer.common.util.StringUtils;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@EqualsAndHashCode(of = {"id"})
 public class UpdateItemRequest {
-	private Long id;
+	Long id;
 
-	private String name;
+	String name;
 
-	private String description;
+	String description;
 
-	private Boolean available;
+	Boolean available;
 
-	private Long ownerId;
+	Long ownerId;
+
+	Long requestId;
+
+	public boolean hasName() {
+		return !StringUtils.isBlank(this.name);
+	}
+
+	public boolean hasDescription() {
+		return !StringUtils.isBlank(this.description);
+	}
+
+	public boolean hasAvailable() {
+		return this.available != null;
+	}
 }

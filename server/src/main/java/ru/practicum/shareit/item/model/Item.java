@@ -1,29 +1,38 @@
 package ru.practicum.shareit.item.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 import ru.practicum.shareit.user.model.User;
 
 @Entity
 @Getter
 @Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(of = {"id"})
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "items")
 public class Item {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	Long id;
 
 	@Column(nullable = false)
-	private String name;
+	String name;
 
 	@Column(nullable = false)
-	private String description;
+	String description;
 
 	@Column(nullable = false)
-	private Boolean available;
+	Boolean available;
 
+	@ToString.Exclude
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "owner_id", nullable = false)
-	private User owner;
+	User user;
+
+	@JoinColumn(name = "request_id")
+	Long requestId;
 }

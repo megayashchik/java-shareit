@@ -3,106 +3,97 @@ package ru.practicum.shareit.booking.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.Status;
+import ru.practicum.shareit.enums.Status;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-	// для пользователя, который осуществляет бронирование
-	@Query("select b from Booking b " +
-			"where b.booker.id = :bookerId " +
-			"order by b.start desc")
-	List<Booking> findAllByBooker(Long bookerId);
+	// Бронирования пользователя (booker)
+	List<Booking> findAllByBookerId(Long bookerId);
 
-	@Query("select b from Booking b " +
+	@Query("select b " +
+			"from Booking as b " +
 			"where b.booker.id = :bookerId " +
-			"and b.start <= :now " +
-			"and b.end > :now " +
-			"order by b.start desc")
-	List<Booking> findCurrentByBooker(Long bookerId, LocalDateTime now);
+			"and CURRENT_TIMESTAMP BETWEEN b.start and b.end")
+	List<Booking> findAllCurrentByBooker(Long bookerId);
 
-	@Query("select b from Booking b " +
+	@Query("select b " +
+			"from Booking as b " +
 			"where b.booker.id = :bookerId " +
-			"and b.end < :now " +
-			"order by b.start desc")
-	List<Booking> findPastByBooker(Long bookerId, LocalDateTime now);
+			"and CURRENT_TIMESTAMP > b.end")
+	List<Booking> findPastByBooker(Long bookerId);
 
-	@Query("select b from Booking b " +
+	@Query("select b " +
+			"from Booking as b " +
 			"where b.booker.id = :bookerId " +
-			"and b.start > :now order " +
-			"by b.start desc")
-	List<Booking> findFutureByBooker(Long bookerId, LocalDateTime now);
+			"and CURRENT_TIMESTAMP < b.start")
+	List<Booking> findAllFutureByBooker(Long bookerId);
 
-	@Query("select b from Booking b " +
-			"where b.booker.id = :bookerId " +
-			"and b.status = :status " +
-			"order by b.start desc")
-	List<Booking> findByBookerAndStatus(Long bookerId, Status status);
+	List<Booking> findAllByBookerIdAndStatus(Long bookerId, Status status);
 
-	// для владельца вещи
-	@Query("select b from Booking b " +
-			"where b.item.owner.id = :ownerId " +
+	// Бронирования владельца вещи (owner)
+	@Query("select b " +
+			"from Booking as b " +
+			"where b.item.user.id = :ownerId " +
 			"order by b.start desc")
 	List<Booking> findAllByOwner(Long ownerId);
 
-	@Query("select b from Booking b " +
-			"where b.item.owner.id = :ownerId " +
-			"and b.start <= :now " +
-			"and b.end > :now " +
-			"order by b.start desc")
-	List<Booking> findCurrentByOwner(Long ownerId, LocalDateTime now);
-
-	@Query("select b from Booking b " +
-			"where b.item.owner.id = :ownerId " +
-			"and b.end < :now " +
-			"order by b.start desc")
-	List<Booking> findPastByOwner(Long ownerId, LocalDateTime now);
-
-	@Query("select b from Booking b " +
-			"where b.item.owner.id = :ownerId " +
-			"and b.start > :now " +
-			"order by b.start desc")
-	List<Booking> findFutureByOwner(Long ownerId, LocalDateTime now);
-
-	@Query("select b from Booking b " +
-			"where b.item.owner.id = :ownerId " +
+	@Query("select b " +
+			"from Booking as b " +
+			"where b.item.user.id = :ownerId " +
 			"and b.status = :status " +
 			"order by b.start desc")
-	List<Booking> findByOwnerAndStatus(Long ownerId, Status status);
+	List<Booking> findAllByOwnerIdAndStatus(Long ownerId, Status status);
 
-	// Дополнительные запросы по бронированиям
-	@Query("select b from Booking b " +
+	@Query("select b " +
+			"from Booking as b " +
+			"where b.item.user.id = :ownerId " +
+			"and CURRENT_TIMESTAMP BETWEEN b.start and b.end")
+	List<Booking> findAllCurrentByOwner(Long ownerId);
+
+	@Query("select b " +
+			"from Booking as b " +
+			"where b.item.user.id = :ownerId " +
+			"and CURRENT_TIMESTAMP > b.end")
+	List<Booking> findAllPastBookingByOwnerId(Long ownerId);
+
+	@Query("select b " +
+			"from Booking as b " +
+			"where b.item.user.id = :ownerId " +
+			"and CURRENT_TIMESTAMP < b.start")
+	List<Booking> findAllFutureBookingByOwnerId(Long ownerId);
+
+	// Дополнительные методы
+	Boolean existsByBookerIdAndItemIdAndEndBefore(Long bookerId, Long itemId, LocalDateTime currentTimeStamp);
+
+	@Query("select b.start " +
+			"from Booking as b " +
+			"where b.item.id = :itemId " +
+			"and b.status = :status " +
+			"and :currentTimeStamp < b.start")
+	List<LocalDateTime> findNextBookingStartByItemId(Long itemId, Status status, LocalDateTime currentTimeStamp);
+
+	@Query("select b.end " +
+			"from Booking as b " +
+			"where b.item.id = :itemId " +
+			"and b.status = :status " +
+			"and :currentTimeStamp > b.end")
+	List<LocalDateTime> findLastBookingEndByItemId(Long itemId, Status status, LocalDateTime currentTimeStamp);
+
+	@Query("select b " +
+			"from Booking as b " +
 			"where b.item.id in :itemIds " +
-			"and b.end < :now " +
-			"and b.status= :status " +
+			"and b.status = :status " +
+			"and :currentTimeStamp > b.end " +
 			"order by b.end desc")
-	List<Booking> findLastBookingByItemIds(List<Long> itemIds, LocalDateTime now, Status status);
+	List<Booking> findLastBookingByItemIds(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
 
-	@Query("select b from Booking b " +
+	@Query("select b " +
+			"from Booking as b " +
 			"where b.item.id in :itemIds " +
-			"and b.start > :now " +
-			"and b.status= :status " +
-			"order by b.start asc")
-	List<Booking> findNextBookingByItemIds(List<Long> itemIds, LocalDateTime now, Status status);
-
-	@Query("select b from Booking b " +
-			"where b.item.id = :itemId " +
-			"and b.start > :now " +
-			"order by b.start asc")
-	List<Booking> findFutureBookings(Long itemId, LocalDateTime now);
-
-	@Query("select b from Booking b " +
-			"where b.item.id = :itemId " +
-			"and b.end < :now " +
 			"and b.status = :status " +
-			"order by b.end desc")
-	List<Booking> findPastBookings(Long itemId, LocalDateTime now, Status status);
-
-	@Query("select b from Booking b " +
-			"where b.item.id = :itemId " +
-			"and b.booker.id = :bookerId " +
-			"and b.status = :status " +
-			"and b.end < :end")
-	List<Booking> findUserBookings(Long itemId, Long bookerId, Status status, LocalDateTime end);
+			"and :currentTimeStamp < b.start " +
+			"order by b.start asc")
+	List<Booking> findNextBookingByItemIds(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
 }

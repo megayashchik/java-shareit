@@ -7,23 +7,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UpdateUserRequest;
-import ru.practicum.shareit.user.dto.UserResponse;
+import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.service.UserService;
 
-import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping(path = "/users")
 @RequiredArgsConstructor
+@RequestMapping(path = "/users")
 public class UserController {
 	private final UserService userService;
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
+	public UserDto create(@Valid @RequestBody CreateUserRequest request) {
 		log.info("Запрос на создание пользователя: {}", request);
-		UserResponse createdUser = userService.create(request);
+		UserDto createdUser = userService.create(request);
 		log.info("Создан пользователь: {}", createdUser);
 
 		return createdUser;
@@ -31,10 +31,10 @@ public class UserController {
 
 	@PatchMapping("/{userId}")
 	@ResponseStatus(HttpStatus.OK)
-	public UserResponse update(@PathVariable("userId") Long userId,
-	                           @Valid @RequestBody UpdateUserRequest request) {
+	public UserDto update(@PathVariable("userId") Long userId,
+	                      @Valid @RequestBody UpdateUserRequest request) {
 		log.info("Запрос на обновление пользователя с id = {}: {}", userId, request);
-		UserResponse updatedUser = userService.update(userId, request);
+		UserDto updatedUser = userService.update(userId, request);
 		log.info("Обновлен пользователь с id = {}: {}", userId, updatedUser);
 
 		return updatedUser;
@@ -42,9 +42,9 @@ public class UserController {
 
 	@GetMapping("/{userId}")
 	@ResponseStatus(HttpStatus.OK)
-	public UserResponse findById(@PathVariable("userId") Long userId) {
+	public UserDto findById(@PathVariable("userId") Long userId) {
 		log.info("Запрос на поиск пользователя c id = {}", userId);
-		UserResponse foundUser = userService.findById(userId);
+		UserDto foundUser = userService.findById(userId);
 		log.info("Найден пользователь с id = {}: {}", userId, foundUser);
 
 		return foundUser;
@@ -60,9 +60,9 @@ public class UserController {
 
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
-	public Collection<UserResponse> findAll() {
+	public List<UserDto> findAll() {
 		log.info("Запрос на список пользователей");
-		Collection<UserResponse> foundUser = userService.findAll();
+		List<UserDto> foundUser = userService.findAll();
 		log.info("Список пользователей {}", foundUser);
 
 		return foundUser;

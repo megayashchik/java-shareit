@@ -1,28 +1,26 @@
 package ru.practicum.shareit.user.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import ru.practicum.shareit.item.model.Item;
-
-import java.util.List;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Entity
 @Getter
 @Setter
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "users")
+@EqualsAndHashCode(of = {"id"})
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-
-	@Column(nullable = false)
-	private String name;
+	Long id;
 
 	@Column(nullable = false, unique = true)
-	private String email;
+	String email;
 
-	@OneToMany(mappedBy = "owner", fetch = FetchType.LAZY)
-	private List<Item> items;
+	@Column(nullable = false)
+	String name;
 }

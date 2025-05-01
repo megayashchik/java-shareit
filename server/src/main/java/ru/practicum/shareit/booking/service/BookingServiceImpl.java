@@ -4,21 +4,25 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.booking.dto.BookingResponse;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingRequest;
+import ru.practicum.shareit.booking.dto.UpdateBookingRequest;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.State;
-import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.enums.State;
+import ru.practicum.shareit.enums.Status;
+import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.NotOwnerException;
+import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -31,7 +35,7 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	@Transactional
-	public BookingResponse create(Long userId, CreateBookingRequest request) {
+	public BookingDto create(Long userId, CreateBookingRequest request) {
 		log.info("Запрос на создание бронирования от пользователя с id = {}", userId);
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос на бронирование не может быть пустым");
@@ -44,7 +48,7 @@ public class BookingServiceImpl implements BookingService {
 			throw new IllegalArgumentException("Вещь не доступна для бронирования");
 		}
 
-		if (item.getOwner().getId().equals(userId)) {
+		if (item.getUser().getId().equals(userId)) {
 			throw new IllegalArgumentException("Нельзя забронировать свою вещь");
 		}
 
@@ -61,13 +65,13 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	@Transactional
-	public BookingResponse approveBooking(Long userId, Long bookingId, Boolean approve) {
+	public BookingDto approveBooking(Long bookingId, Long userId, Boolean approve) {
 		log.info("Подтверждение или отклонение запроса на бронирование с id = {} владельца с id = {}",
 				bookingId, userId);
 		Booking booking = findBookingById(bookingId);
 		Item item = booking.getItem();
 
-		if (!item.getOwner().getId().equals(userId)) {
+		if (!item.getUser().getId().equals(userId)) {
 			throw new NotOwnerException("Только владелец вещи может подтверждать бронирование");
 		}
 
@@ -88,12 +92,12 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	@Override
-	public BookingResponse findById(Long userId, Long bookingId) {
+	public BookingDto findBookingById(Long bookingId, Long userId) {
 		log.info("Получение бронирования c id = {} от пользователя с id = {}", bookingId, userId);
 		User user = findUserById(userId);
 		Booking booking = findBookingById(bookingId);
 
-		if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getOwner().getId().equals(userId)) {
+		if (!booking.getBooker().getId().equals(userId) && !booking.getItem().getUser().getId().equals(userId)) {
 			throw new NotOwnerException("Доступ к бронированию имеют только его автор или владелец вещи");
 		}
 		log.info("Найдено бронирование {} пользователя с id = {}", booking, userId);
@@ -102,41 +106,81 @@ public class BookingServiceImpl implements BookingService {
 	}
 
 	@Override
-	public List<BookingResponse> findAllByBooker(Long bookerId, State state) {
-		log.info("Получение списка бронирований со статусом {} пользователя с id = {}", state, bookerId);
-		findUserById(bookerId);
+	public List<BookingDto> findAllByBooker(Long userId, String state) {
+		log.info("Получение списка бронирований со статусом {} пользователя с id = {}", state, userId);
+		State currentState = State.valueOf(state);
+		findUserById(userId);
 
-		LocalDateTime now = LocalDateTime.now();
-		List<Booking> bookings = switch (state) {
-			case ALL -> bookingRepository.findAllByBooker(bookerId);
-			case CURRENT -> bookingRepository.findCurrentByBooker(bookerId, now);
-			case PAST -> bookingRepository.findPastByBooker(bookerId, now);
-			case FUTURE -> bookingRepository.findFutureByBooker(bookerId, now);
-			case WAITING -> bookingRepository.findByBookerAndStatus(bookerId, Status.WAITING);
-			case REJECTED -> bookingRepository.findByBookerAndStatus(bookerId, Status.REJECTED);
+		List<Booking> bookings = switch (currentState) {
+			case ALL -> bookingRepository.findAllByBookerId(userId);
+			case CURRENT -> bookingRepository.findAllCurrentByBooker(userId);
+			case PAST -> bookingRepository.findPastByBooker(userId);
+			case FUTURE -> bookingRepository.findAllFutureByBooker(userId);
+			case WAITING -> bookingRepository.findAllByBookerIdAndStatus(userId, Status.WAITING);
+			case REJECTED -> bookingRepository.findAllByBookerIdAndStatus(userId, Status.REJECTED);
 		};
-		log.info("Найдено {} бронирований пользователя с id = {}", bookings.size(), bookerId);
+		log.info("Найдено {} бронирований пользователя с id = {}", bookings.size(), userId);
 
-		return BookingMapper.mapToBookingList(bookings);
+		return bookings.stream()
+				.map(BookingMapper::mapToBookingDto)
+				.sorted(Comparator.comparing(BookingDto::getStart))
+				.toList();
 	}
 
 	@Override
-	public List<BookingResponse> findAllByOwner(Long ownerId, State state) {
-		log.info("Получение списка бронирований со статусом {} владельца вещи с id = {}", state, ownerId);
-		findUserById(ownerId);
+	public List<BookingDto> findAllByOwner(Long userId, String state) {
+		log.info("Получение списка бронирований со статусом {} владельца вещи с id = {}", state, userId);
+		State currentState = State.valueOf(state);
+		findUserById(userId);
 
 		LocalDateTime now = LocalDateTime.now();
-		List<Booking> bookings = switch (state) {
-			case ALL -> bookingRepository.findAllByOwner(ownerId);
-			case CURRENT -> bookingRepository.findCurrentByOwner(ownerId, now);
-			case PAST -> bookingRepository.findPastByOwner(ownerId, now);
-			case FUTURE -> bookingRepository.findFutureByOwner(ownerId, now);
-			case WAITING -> bookingRepository.findByOwnerAndStatus(ownerId, Status.WAITING);
-			case REJECTED -> bookingRepository.findByOwnerAndStatus(ownerId, Status.REJECTED);
+		List<Booking> bookings = switch (currentState) {
+			case ALL -> bookingRepository.findAllByOwner(userId);
+			case CURRENT -> bookingRepository.findAllCurrentByOwner(userId);
+			case PAST -> bookingRepository.findAllPastBookingByOwnerId(userId);
+			case FUTURE -> bookingRepository.findAllFutureBookingByOwnerId(userId);
+			case WAITING -> bookingRepository.findAllByOwnerIdAndStatus(userId, Status.WAITING);
+			case REJECTED -> bookingRepository.findAllByOwnerIdAndStatus(userId, Status.REJECTED);
 		};
-		log.info("Найдено {} бронирований владельца вещи с id = {}", bookings.size(), ownerId);
+		log.info("Найдено {} бронирований владельца вещи с id = {}", bookings.size(), userId);
 
-		return BookingMapper.mapToBookingList(bookings);
+		return bookings.stream()
+				.map(BookingMapper::mapToBookingDto)
+				.sorted(Comparator.comparing(BookingDto::getStart))
+				.toList();
+	}
+
+	@Override
+	@Transactional
+	public BookingDto update(Long userId, UpdateBookingRequest request) {
+		log.debug("Обновление бронирования от пользователя с id = {}", userId);
+
+		if (request.getId() == null) {
+			throw new ValidationException("Должен быть указан id бронирования");
+		}
+
+		User owner = findUserById(userId);
+		Booking findBooking = findBookingById(request.getId());
+
+		if (!findBooking.getBooker().getId().equals(userId) && !owner.getId().equals(userId)) {
+			throw new NotBookedException("Только владелец вещи или арендатор могут подтверждать бронирование");
+		}
+
+		Booking updatedBooking = BookingMapper.updateBooking(findBooking, request);
+		updatedBooking = bookingRepository.save(updatedBooking);
+
+		log.debug("Обновлено бронирование от пользователя с id = {}", userId);
+
+		return BookingMapper.mapToBookingDto(updatedBooking);
+	}
+
+	@Override
+	@Transactional
+	public void delete(Long bookingId) {
+		log.debug("Удаление бронирования с id = {}", bookingId);
+		Booking booking = findBookingById(bookingId);
+		log.debug("Удалено бронирование с id = {}", bookingId);
+		bookingRepository.delete(booking);
 	}
 
 	private User findUserById(Long userId) {

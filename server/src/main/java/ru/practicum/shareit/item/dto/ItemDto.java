@@ -8,10 +8,10 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ItemResponse {
+public class ItemDto {
 	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
 	Long id;
 

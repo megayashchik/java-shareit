@@ -1,46 +1,95 @@
 package ru.practicum.shareit.item.mapper;
 
-import ru.practicum.shareit.booking.dto.BookingResponse;
-import ru.practicum.shareit.item.dto.CommentResponse;
+import ru.practicum.shareit.item.comment.Comment;
+import ru.practicum.shareit.item.comment.CommentMapper;
 import ru.practicum.shareit.item.dto.CreateItemRequest;
-import ru.practicum.shareit.item.dto.ItemResponse;
+import ru.practicum.shareit.item.dto.ItemDetailsDto;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.UpdateItemRequest;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public class ItemMapper {
 
-	public static Item mapToItemDto(User owner, CreateItemRequest request) {
+	public static Item mapToItem(User owner, CreateItemRequest request) {
 		Item item = new Item();
 		item.setName(request.getName());
 		item.setDescription(request.getDescription());
 		item.setAvailable(request.getAvailable());
-		item.setOwner(owner);
+		item.setUser(owner);
+		if (request.hasRequestId()) {
+			item.setRequestId(request.getRequestId());
+		}
 
 		return item;
 	}
 
-	public static ItemResponse mapToItemDto(Item item) {
-		ItemResponse itemResponse = new ItemResponse();
-		itemResponse.setId(item.getId());
-		itemResponse.setName(item.getName());
-		itemResponse.setDescription(item.getDescription());
-		itemResponse.setAvailable(item.getAvailable());
-		itemResponse.setOwnerId(item.getOwner().getId());
+	public static ItemDto mapToItemDto(Item item) {
+		ItemDto itemDto = new ItemDto();
+		itemDto.setId(item.getId());
+		itemDto.setName(item.getName());
+		itemDto.setDescription(item.getDescription());
+		itemDto.setAvailable(item.getAvailable());
+		itemDto.setOwnerId(item.getUser().getId());
+		if (item.getRequestId() != null) {
+			itemDto.setRequestId(item.getRequestId());
+		}
 
-		return itemResponse;
+		return itemDto;
 	}
 
-	public static ItemResponse mapToItemDtoWithBookingsAndComments(Item item,
-	                                                               BookingResponse lastBooking,
-	                                                               BookingResponse nextBooking,
-	                                                               List<CommentResponse> comments) {
-		ItemResponse itemResponse = mapToItemDto(item);
-		itemResponse.setLastBooking(lastBooking);
-		itemResponse.setNextBooking(nextBooking);
-		itemResponse.setComments(comments != null ? comments : List.of());
+	public static Item updateItem(Item item, UpdateItemRequest request) {
+		if (request.hasName()) {
+			item.setName(request.getName());
+		}
 
-		return itemResponse;
+		if (request.hasDescription()) {
+			item.setDescription(request.getDescription());
+		}
+
+		if (request.hasAvailable()) {
+			item.setAvailable(request.getAvailable());
+		}
+
+		return item;
+	}
+
+	public static ItemDetailsDto mapToItemDetailsDto(Item item, List<Comment> comments) {
+		ItemDetailsDto dto = new ItemDetailsDto();
+		dto.setId(item.getId());
+		dto.setName(item.getName());
+		dto.setDescription(item.getDescription());
+		dto.setAvailable(item.getAvailable());
+		dto.setOwnerId(item.getUser().getId());
+		dto.setComments(comments.stream().map(CommentMapper::mapToCommentDto).toList());
+		if (item.getRequestId() != null) {
+			dto.setRequestId(item.getRequestId());
+		}
+
+		return dto;
+	}
+
+	public static ItemDetailsDto mapToItemDetailsDto(Item item,
+	                                                 List<Comment> comments,
+	                                                 Optional<LocalDateTime> lastBooking,
+	                                                 Optional<LocalDateTime> nextBooking) {
+		ItemDetailsDto dto = new ItemDetailsDto();
+		dto.setId(item.getId());
+		dto.setName(item.getName());
+		dto.setDescription(item.getDescription());
+		dto.setAvailable(item.getAvailable());
+		dto.setOwnerId(item.getUser().getId());
+		lastBooking.ifPresent(dto::setLastBooking);
+		nextBooking.ifPresent(dto::setNextBooking);
+		dto.setComments(comments.stream().map(CommentMapper::mapToCommentDto).toList());
+		if (item.getRequestId() != null) {
+			dto.setRequestId(item.getRequestId());
+		}
+
+		return dto;
 	}
 }

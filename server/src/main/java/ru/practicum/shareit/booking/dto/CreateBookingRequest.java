@@ -3,22 +3,29 @@ package ru.practicum.shareit.booking.dto;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateBookingRequest {
-	@NotNull(message = "Id вещи должен быть указан")
-	private Long itemId;
-
 	@NotNull(message = "Дата начала бронирования должна быть указана")
 	@FutureOrPresent(message = "Дата начала должна быть сегодня или в будущем")
-	private LocalDateTime start;
+	LocalDateTime start;
 
 	@NotNull(message = "Дата окончания бронирования должна быть указана")
 	@Future(message = "Дата окончания бронирования должна быть в будущем")
-	private LocalDateTime end;
+	LocalDateTime end;
+
+	@NotNull(message = "Id вещи должен быть указан")
+	Long itemId;
+
+	Long booker;
 }
