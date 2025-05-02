@@ -8,12 +8,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.DuplicateEmailException;
 import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.NotOwnerException;
 import ru.practicum.shareit.item.comment.dto.CreateCommentRequest;
 import ru.practicum.shareit.item.dto.CreateItemRequest;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.UpdateItemRequest;
+import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemServiceImpl;
@@ -25,12 +28,13 @@ import ru.practicum.shareit.user.service.UserServiceImpl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -52,7 +56,27 @@ class ItemServiceTest {
 	private UserServiceImpl userService;
 
 	@Test
-	void should_fail_add_comment_when_user_not_booked_item() {
+	void should_create_item_successfully() {
+		Long ownerId = 1L;
+		CreateItemRequest request =
+				new CreateItemRequest("name", "description", true, ownerId, null);
+
+		User owner = new User(ownerId, "email", "name");
+		Item item = new Item(1L, "name", "description", true, owner, null);
+		ItemDto expectedDto = ItemMapper.mapToItemDto(item);
+
+		when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+		when(itemRepository.save(any(Item.class))).thenReturn(item);
+
+		ItemDto result = itemService.create(ownerId, request);
+
+		assertNotNull(result);
+		assertEquals(expectedDto.getId(), result.getId());
+		assertEquals(expectedDto.getName(), result.getName());
+	}
+
+	@Test
+	void should_fail_add_comment_when_user_no_booked_item() {
 		CreateCommentRequest newComment = new CreateCommentRequest("comment", 1L, 1L);
 
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
@@ -148,7 +172,7 @@ class ItemServiceTest {
 	}
 
 	@Test
-	void should_return_empty_list_when_owner_id_invalid() {
+	void should_return_empty_list_when_owner_id_not_valid() {
 		when(userRepository.findById(999L))
 				.thenReturn(Optional.empty());
 
@@ -157,5 +181,84 @@ class ItemServiceTest {
 		});
 
 		assertEquals("Пользователь с id = 999 не найден", thrown.getMessage());
+	}
+
+
+	@Test
+	void should_throw_when_create_item_request_is_null() {
+		Long ownerId = 1L;
+		assertThrows(IllegalArgumentException.class, () -> {
+			itemService.create(ownerId, null);
+		});
+	}
+
+	@Test
+	void should_throw_when_item_name_is_blank() {
+		Long ownerId = 1L;
+		CreateItemRequest request =
+				new CreateItemRequest(" ", "desc", true, ownerId, null);
+		assertThrows(IllegalArgumentException.class, () -> {
+			itemService.create(ownerId, request);
+		});
+	}
+
+	@Test
+	void should_throw_when_item_description_is_blank() {
+		Long ownerId = 1L;
+		CreateItemRequest request =
+				new CreateItemRequest("name", " ", true, ownerId, null);
+		assertThrows(IllegalArgumentException.class, () -> {
+			itemService.create(ownerId, request);
+		});
+	}
+
+	@Test
+	void should_throw_when_item_availability_is_null() {
+		Long ownerId = 1L;
+		CreateItemRequest request =
+				new CreateItemRequest("name", "desc", null, ownerId, null);
+		assertThrows(DuplicateEmailException.class, () -> {
+			itemService.create(ownerId, request);
+		});
+	}
+
+	@Test
+	void should_update_item_successfully() {
+		Long ownerId = 1L;
+		User user = new User(ownerId, "email", "name");
+		Item item = new Item(1L, "old", "oldDesc", true, user, null);
+
+		when(userRepository.findById(ownerId)).thenReturn(Optional.of(user));
+		when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+		when(itemRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+		UpdateItemRequest request = mock(UpdateItemRequest.class);
+		when(request.getName()).thenReturn("newName");
+		when(request.getDescription()).thenReturn("newDesc");
+		when(request.getAvailable()).thenReturn(false);
+
+		when(request.hasName()).thenReturn(true);
+		when(request.hasDescription()).thenReturn(true);
+		when(request.hasAvailable()).thenReturn(true);
+
+		ItemDto result = itemService.update(1L, request, ownerId);
+
+		assertEquals("newName", result.getName());
+		assertEquals("newDesc", result.getDescription());
+		assertFalse(result.getAvailable());
+	}
+
+	@Test
+	void should_return_items_by_text() {
+		String text = "поиск";
+		User user = new User(1L, "email", "name");
+		Item item = new Item(1L, "поиск", "описание", true, user, null);
+		List<Item> items = List.of(item);
+
+		when(itemRepository.findItemsByText(text)).thenReturn(items);
+
+		List<ItemDto> results = itemService.findItemsByBooker(1L, text);
+		assertEquals(1, results.size());
+		assertEquals("поиск", results.get(0).getName());
 	}
 }
