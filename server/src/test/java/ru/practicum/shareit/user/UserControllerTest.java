@@ -88,7 +88,8 @@ class UserControllerTest {
 	@Test
 	void should_delete_user() throws Exception {
 		mvc.perform(delete(urlTemplate + "/" + anyLong()))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent());
+//				.andExpect(status().isOk());
 
 		verify(userService, times(1)).delete(anyLong());
 	}

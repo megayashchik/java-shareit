@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.shareit.exception.DuplicateEmailException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UpdateUserRequest;
 import ru.practicum.shareit.user.model.User;
@@ -40,10 +39,10 @@ class UserServiceTest {
 	void should_fail_create_user_when_email_exists() {
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
-		when(userRepository.findByEmail(newUser.getEmail())).
-				thenReturn(Optional.of(new User(1L, "john.doe@mail.com", "Some User")));
+		when(userRepository.findByEmail(newUser.getEmail()))
+				.thenReturn(Optional.of(new User(1L, "john.doe@mail.com", "Some User")));
 
-		DuplicateEmailException  thrown = assertThrows(DuplicateEmailException .class, () -> {
+		DuplicateEmailException thrown = assertThrows(DuplicateEmailException.class, () -> {
 			userService.create(newUser);
 		});
 
@@ -52,26 +51,34 @@ class UserServiceTest {
 
 	@Test
 	void should_fail_update_user_when_email_exists() {
-		UpdateUserRequest newUser = new UpdateUserRequest(1L, "john.doe@mail.com", "John Doe");
+		Long userId = 1L;
+		String existingEmail = "existing@mail.com";
+		String newEmail = "new@mail.com";
 
-		when(userRepository.findByEmail(newUser.getEmail())).
-				thenReturn(Optional.of(new User(1L, "john.doe@mail.com", "Some User")));
+		UpdateUserRequest updateRequest = new UpdateUserRequest(userId, newEmail, "New Name");
 
-		DuplicateEmailException  thrown = assertThrows(DuplicateEmailException .class, () -> {
-			userService.update(1L, newUser);
+
+		User existingUser = new User(userId, "old@mail.com", "Old Name");
+		when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+
+		User anotherUser = new User(2L, newEmail, "Another User");
+		when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(anotherUser));
+
+		DuplicateEmailException thrown = assertThrows(DuplicateEmailException.class, () -> {
+			userService.update(userId, updateRequest);
 		});
 
-		assertEquals(String.format("Этот E-mail \"%s\" уже используется", newUser.getEmail()), thrown.getMessage());
+		assertEquals("Этот email " + newEmail + " уже используется", thrown.getMessage());
 	}
 
 	@Test
 	void should_fail_update_user_when_id_missing() {
 		UpdateUserRequest newUser = new UpdateUserRequest(1L, "john.doe@mail.com", "John Doe");
 
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotFoundException thrown = assertThrows(NotFoundException.class, () -> {
 			userService.update(null, newUser);
 		});
 
-		assertEquals("ID пользователя должен быть указан", thrown.getMessage());
+		assertEquals("id пользователя должен быть указан", thrown.getMessage());
 	}
 }

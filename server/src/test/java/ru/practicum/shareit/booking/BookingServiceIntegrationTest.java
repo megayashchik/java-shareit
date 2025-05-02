@@ -11,6 +11,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import ru.practicum.shareit.ShareItServer;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingRequest;
 import ru.practicum.shareit.booking.dto.UpdateBookingRequest;
@@ -21,7 +22,6 @@ import ru.practicum.shareit.enums.Status;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @SpringBootTest(
+		classes = ShareItServer.class,
 		properties = "spring.datasource.username=shareit",
 		webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class BookingServiceIntegrationTest {
@@ -54,22 +55,20 @@ class BookingServiceIntegrationTest {
 	}
 
 	private void createUser1InDb() {
-		Query user1Query = em.createNativeQuery("INSERT INTO Users (id, name, email, birthday) " +
-				"VALUES (:id , :name , :email , :birthday);");
+		Query user1Query = em.createNativeQuery("INSERT INTO Users (id, name, email) " +
+				"VALUES (:id , :name , :email);");
 		user1Query.setParameter("id", "1");
 		user1Query.setParameter("name", "Ivan Ivanov");
 		user1Query.setParameter("email", "ivan@email");
-		user1Query.setParameter("birthday", LocalDate.of(2021, 7, 1));
 		user1Query.executeUpdate();
 	}
 
 	private void createUser2InDb() {
-		Query user2Query = em.createNativeQuery("INSERT INTO Users (id, name, email, birthday) " +
-				"VALUES (:id , :name , :email , :birthday);");
+		Query user2Query = em.createNativeQuery("INSERT INTO Users (id, name, email) " +
+				"VALUES (:id , :name , :email);");
 		user2Query.setParameter("id", "2");
 		user2Query.setParameter("name", "Petr Petrov");
 		user2Query.setParameter("email", "petr@email");
-		user2Query.setParameter("birthday", LocalDate.of(2021, 7, 1));
 		user2Query.executeUpdate();
 	}
 
@@ -143,7 +142,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 
 		BookingDto booking = bookingService.create(2L, newRequest);
 
@@ -315,7 +315,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 
 		BookingDto findBooking = bookingService.create(2L, newRequest);
 
@@ -344,7 +345,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		BookingDto newBooking = bookingService.create(2L, newRequest);
 
 		bookingService.approveBooking(newBooking.getId(), newBooking.getItem().getOwnerId(), Boolean.FALSE);
@@ -462,7 +464,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 
 		BookingDto findBooking = bookingService.create(2L, newRequest);
 
@@ -491,7 +494,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		BookingDto newBooking = bookingService.create(2L, newRequest);
 
 		bookingService.approveBooking(newBooking.getId(), newBooking.getItem().getOwnerId(), Boolean.FALSE);
@@ -521,7 +525,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		BookingDto newBooking = bookingService.create(2L, newRequest);
 
 		BookingDto approvedBooking =
@@ -547,7 +552,8 @@ class BookingServiceIntegrationTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		BookingDto newBooking = bookingService.create(2L, newRequest);
 
 		BookingDto approvedBooking =

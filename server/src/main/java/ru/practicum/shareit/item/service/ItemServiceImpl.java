@@ -78,32 +78,19 @@ public class ItemServiceImpl implements ItemService {
 	@Transactional
 	public ItemDto update(Long itemId, UpdateItemRequest request, Long ownerId) {
 		log.info("Обновление вещи для пользователя с id = {}, запрос: {}", ownerId, request);
+
 		Item item = findItemById(itemId);
 
-		if (request == null) {
-			throw new IllegalArgumentException("Запрос на обновление не может быть null");
-		}
-
 		if (!item.getUser().getId().equals(ownerId)) {
-			throw new NotOwnerException("Предмет с id = " + itemId + " не принадлежит пользователю");
-		}
-
-		if (request.getName() != null && request.getName().isBlank()) {
-			throw new IllegalArgumentException("Название не может быть пустым");
-		}
-
-		if (request.getDescription() != null && request.getDescription().isBlank()) {
-			throw new IllegalArgumentException("Описание не может быть пустым");
+			throw new NotOwnerException("Редактировать данные вещи может только её владелец");
 		}
 
 		if (request.getName() != null) {
 			item.setName(request.getName());
 		}
-
 		if (request.getDescription() != null) {
 			item.setDescription(request.getDescription());
 		}
-
 		if (request.getAvailable() != null) {
 			item.setAvailable(request.getAvailable());
 		}
@@ -192,8 +179,8 @@ public class ItemServiceImpl implements ItemService {
 
 		LocalDateTime current = LocalDateTime.now().plusHours(3);
 		if (!bookingRepository.existsByBookerIdAndItemIdAndEndBefore(userId, itemId, current)) {
-			throw new NotBookedException("Пользователь с id = " + userId + " не может оставить комментарий, " +
-					"так как не пользовался вещью с id = " + itemId);
+			throw new NotBookedException(String.format("Пользователь %s не может оставить комментарий, " +
+					"так как не пользовался вещью %s", author.getName(), item.getName()));
 		}
 
 		Comment comment = CommentMapper.mapToComment(author, item, request);
@@ -230,17 +217,18 @@ public class ItemServiceImpl implements ItemService {
 				.min(Comparator.naturalOrder());
 	}
 
+
 	private List<ItemDetailsDto> fillItemData(List<Item> userItems) {
 		LocalDateTime now = LocalDateTime.now();
 		List<Long> itemIds = userItems.stream().map(Item::getId).toList();
 
 		Map<Item, LocalDateTime> lastItemBookingEndDate = bookingRepository
-				.findLastBookingByItemIds(itemIds, Status.APPROVED, now)
+				.findByItemInAndEndBefore(itemIds, Status.APPROVED, now)
 				.stream()
 				.collect(Collectors.toMap(Booking::getItem, Booking::getEnd));
 
 		Map<Item, LocalDateTime> nextItemBookingStartDate = bookingRepository
-				.findNextBookingByItemIds(itemIds, Status.APPROVED, now)
+				.findByItemInAndStartAfter(itemIds, Status.APPROVED, now)
 				.stream()
 				.collect(Collectors.toMap(Booking::getItem, Booking::getStart));
 

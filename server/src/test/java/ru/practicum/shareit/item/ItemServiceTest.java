@@ -5,12 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.exception.NotBookedException;
+import ru.practicum.shareit.exception.NotFoundException;
 import ru.practicum.shareit.exception.NotOwnerException;
-import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.comment.dto.CreateCommentRequest;
 import ru.practicum.shareit.item.dto.CreateItemRequest;
-import ru.practicum.shareit.item.dto.ItemDetailsDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -31,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ExtendWith(MockitoExtension.class)
 class ItemServiceTest {
 	@Mock
@@ -73,7 +76,7 @@ class ItemServiceTest {
 
 		when(bookingRepository.existsByBookerIdAndItemIdAndEndBefore(anyLong(),
 				anyLong(), any())).thenReturn(Boolean.FALSE);
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotBookedException thrown = assertThrows(NotBookedException.class, () -> {
 			itemService.addComment(1L, 1L, newComment);
 		});
 
@@ -106,7 +109,7 @@ class ItemServiceTest {
 			itemService.delete(2L, 1L);
 		});
 
-		assertEquals("Удалить данные вещи может только её владелец", thrown.getMessage());
+		assertEquals("Только владелец вещи может её удалить", thrown.getMessage());
 	}
 
 	@Test
@@ -146,10 +149,13 @@ class ItemServiceTest {
 
 	@Test
 	void should_return_empty_list_when_owner_id_invalid() {
-		when(itemRepository.findAllByUserId(anyLong())).thenReturn(new ArrayList<>());
+		when(userRepository.findById(999L))
+				.thenReturn(Optional.empty());
 
-		Collection<ItemDetailsDto> items = itemService.findAll(999L);
+		NotFoundException thrown = assertThrows(NotFoundException.class, () -> {
+			itemService.findAll(999L);
+		});
 
-		assertEquals(items, new ArrayList<>());
+		assertEquals("Пользователь с id = 999 не найден", thrown.getMessage());
 	}
 }

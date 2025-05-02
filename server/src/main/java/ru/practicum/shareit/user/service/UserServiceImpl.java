@@ -14,6 +14,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,20 +26,13 @@ public class UserServiceImpl implements UserService {
 	@Transactional
 	public UserDto create(CreateUserRequest request) {
 		log.info("Создание пользователя: {}", request);
-		if (request == null) {
-			throw new IllegalArgumentException("Запрос не может быть null");
+		Optional<User> foundUser = userRepository.findByEmail(request.getEmail());
+		if (foundUser.isPresent()) {
+			throw new DuplicateEmailException(String.format("Этот E-mail \"%s\" уже используется", request.getEmail()));
 		}
 
 		if (request.getName() == null || request.getName().isBlank()) {
 			throw new IllegalArgumentException("Имя не может быть пустым");
-		}
-
-		if (request.getEmail() == null || request.getEmail().isBlank()) {
-			throw new IllegalArgumentException("Email не может быть пустым");
-		}
-
-		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new DuplicateEmailException("Такой email уже используется");
 		}
 
 		User user = UserMapper.mapToUser(request);
@@ -51,25 +45,29 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public UserDto update(Long userId, UpdateUserRequest request) {
+		if (userId == null) {
+			throw new NotFoundException("id пользователя должен быть указан");
+		}
+
 		if (request == null) {
 			throw new IllegalArgumentException("Запрос на обновление не может быть пустым");
 		}
 		User existingUser = userRepository.findById(userId)
 				.orElseThrow(() -> new NotFoundException("Пользователь с id = " + userId + " не найден"));
 
-		if (request.getName() != null && request.getName().isBlank()) {
-			throw new IllegalArgumentException("Имя не может быть пустым");
-		}
-
 		if (request.getEmail() != null) {
 			if (request.getEmail().isBlank()) {
 				throw new IllegalArgumentException("Email не может быть пустым");
 			}
 
-			if (!request.getEmail().equals(existingUser.getEmail()) &&
-					userRepository.existsByEmail(request.getEmail())) {
-				throw new DuplicateEmailException("Такой email уже используется");
+			Optional<User> userWithSameEmail = userRepository.findByEmail(request.getEmail());
+			if (userWithSameEmail.isPresent() && !userWithSameEmail.get().getId().equals(userId)) {
+				throw new DuplicateEmailException("Этот email " + request.getEmail() + " уже используется");
 			}
+		}
+
+		if (request.getName() != null && request.getName().isBlank()) {
+			throw new IllegalArgumentException("Имя не может быть пустым");
 		}
 
 		User updatedUser = UserMapper.updateUser(existingUser, request);

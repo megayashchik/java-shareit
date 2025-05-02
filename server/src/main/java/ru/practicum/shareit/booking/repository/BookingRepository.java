@@ -87,7 +87,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			"and b.status = :status " +
 			"and :currentTimeStamp > b.end " +
 			"order by b.end desc")
-	List<Booking> findLastBookingByItemIds(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
+	List<Booking> findByItemInAndEndBefore(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
 
 	@Query("select b " +
 			"from Booking as b " +
@@ -95,5 +95,5 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 			"and b.status = :status " +
 			"and :currentTimeStamp < b.start " +
 			"order by b.start asc")
-	List<Booking> findNextBookingByItemIds(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
+	List<Booking> findByItemInAndStartAfter(List<Long> itemIds, Status status, LocalDateTime currentTimeStamp);
 }

@@ -8,14 +8,9 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Getter
-@Setter
-@ToString
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"id"})
-@Entity
-@Table(name = "requests")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequestDto {
 	@Id

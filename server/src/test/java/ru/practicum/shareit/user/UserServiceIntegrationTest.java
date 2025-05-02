@@ -17,7 +17,6 @@ import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -36,12 +35,11 @@ class UserServiceIntegrationTest {
 	private final UserService userService;
 
 	private void createUserInDb() {
-		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email, birthday) " +
-				"VALUES (:id , :name , :email , :birthday);");
+		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email) " +
+				"VALUES (:id , :name , :email);");
 		userQuery.setParameter("id", "1");
 		userQuery.setParameter("name", "Ivan Ivanov");
 		userQuery.setParameter("email", "ivan@email");
-		userQuery.setParameter("birthday", LocalDate.of(2021, 7, 1));
 		userQuery.executeUpdate();
 	}
 
@@ -84,7 +82,7 @@ class UserServiceIntegrationTest {
 		MatcherAssert.assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
 	}
 
-	private CreateUserRequest makeNewUser(String email, String name, LocalDate birthday) {
+	private CreateUserRequest makeNewUser(String email, String name) {
 		CreateUserRequest dto = new CreateUserRequest();
 		dto.setName(name);
 		dto.setEmail(email);
@@ -106,10 +104,9 @@ class UserServiceIntegrationTest {
 	@Test
 	void should_find_all_users() {
 		List<CreateUserRequest> newUsers = List.of(
-				makeNewUser("ivan@email", "Ivan Ivanov", LocalDate.of(2021, 7, 1)),
-				makeNewUser("petr@email", "Pet Petrovr", LocalDate.of(2022, 8, 2)),
-				makeNewUser("vasilii@email", "Vasilii Vasiliev",
-						LocalDate.of(2023, 9, 3)));
+				makeNewUser("ivan@email", "Ivan Ivanov"),
+				makeNewUser("petr@email", "Pet Petrov"),
+				makeNewUser("vasilii@email", "Vasilii Vasiliev"));
 
 		for (CreateUserRequest user : newUsers) {
 			userService.create(user);

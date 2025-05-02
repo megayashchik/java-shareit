@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingRequest;
 import ru.practicum.shareit.booking.dto.UpdateBookingRequest;
@@ -33,9 +35,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class BookingServiceTest {
 	@Mock
 	private ItemRepository itemRepository;
@@ -62,7 +66,8 @@ class BookingServiceTest {
 						LocalDateTime.of(
 								2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
@@ -83,11 +88,11 @@ class BookingServiceTest {
 
 		when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
 
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotBookedException thrown = assertThrows(NotBookedException.class, () -> {
 			bookingService.create(1L, newBooking);
 		});
 
-		assertEquals("Вещь не доступна для бронирования!", thrown.getMessage());
+		assertEquals("Вещь не доступна для бронирования", thrown.getMessage());
 	}
 
 	@Test
@@ -96,7 +101,8 @@ class BookingServiceTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
@@ -117,11 +123,11 @@ class BookingServiceTest {
 
 		when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
 
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotBookedException thrown = assertThrows(NotBookedException.class, () -> {
 			bookingService.create(1L, newBooking);
 		});
 
-		assertEquals("Нельзя бронировать собственную вещь", thrown.getMessage());
+		assertEquals("Нельзя забронировать свою вещь", thrown.getMessage());
 	}
 
 	@Test
@@ -159,7 +165,8 @@ class BookingServiceTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		Booking booking =
 				new Booking(1L, LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
@@ -171,11 +178,11 @@ class BookingServiceTest {
 
 		when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
 
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotOwnerException thrown = assertThrows(NotOwnerException.class, () -> {
 			bookingService.findBookingById(1L, 999L);
 		});
 
-		assertEquals("Только владелец вещи и создатель брони могут просматривать данные о бронировании",
+		assertEquals("Доступ к бронированию имеют только его автор или владелец вещи",
 				thrown.getMessage());
 	}
 
@@ -193,7 +200,7 @@ class BookingServiceTest {
 			bookingService.update(1L, updBooking);
 		});
 
-		assertEquals("ID бронирования должен быть указан", thrown.getMessage());
+		assertEquals("Должен быть указан id бронирования", thrown.getMessage());
 	}
 
 	@Test
@@ -231,7 +238,8 @@ class BookingServiceTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		Booking booking =
 				new Booking(1L, LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(2024, 7, 2, 19, 30, 15),
@@ -249,11 +257,11 @@ class BookingServiceTest {
 								2026, 7, 2, 19, 30, 15), 1L,
 						Status.REJECTED, 1L);
 
-		ValidationException thrown = assertThrows(ValidationException.class, () -> {
+		NotBookedException thrown = assertThrows(NotBookedException.class, () -> {
 			bookingService.update(1L, updBooking);
 		});
 
-		assertEquals("Только владелец вещи и создатель брони могут редактировать данные о бронировании",
+		assertEquals("Только владелец вещи или арендатор могут подтверждать бронирование",
 				thrown.getMessage());
 	}
 
@@ -271,7 +279,7 @@ class BookingServiceTest {
 
 		CreateUserRequest newUser2 = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
-		when(userRepository.findByEmail(newUser2.getEmail())).thenReturn(Optional.empty());
+		lenient().when(userRepository.findByEmail(newUser2.getEmail())).thenReturn(Optional.empty());
 		when(userRepository.save(any())).thenReturn(new User(2L, "john.doe@mail.com", "John Doe"));
 
 		userService.create(newUser2);
@@ -292,7 +300,8 @@ class BookingServiceTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		Booking booking =
 				new Booking(1L, LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
@@ -308,7 +317,7 @@ class BookingServiceTest {
 			bookingService.approveBooking(1L, 2L, Boolean.TRUE);
 		});
 
-		assertEquals("Менять статус вещи может только её владелец", thrown.getMessage());
+		assertEquals("Только владелец вещи может подтверждать бронирование", thrown.getMessage());
 	}
 
 	@Test
@@ -346,7 +355,8 @@ class BookingServiceTest {
 				new CreateBookingRequest(LocalDateTime.of(
 						2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
-								2024, 7, 2, 19, 30, 15), 1L, 2L);
+								2024, 7, 2, 19, 30, 15),
+						1L, 2L);
 		Booking booking =
 				new Booking(1L, LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 						LocalDateTime.of(
@@ -362,6 +372,6 @@ class BookingServiceTest {
 			bookingService.approveBooking(1L, 1L, Boolean.FALSE);
 		});
 
-		assertEquals("Вещь уже занята!", thrown.getMessage());
+		assertEquals("Бронирование подтверждено или отклонено", thrown.getMessage());
 	}
 }

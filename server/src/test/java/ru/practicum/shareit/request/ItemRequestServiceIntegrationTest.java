@@ -17,7 +17,6 @@ import ru.practicum.shareit.request.dto.UpdateRequest;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.service.ItemRequestService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,12 +36,11 @@ class ItemRequestServiceIntegrationTest {
 	private final ItemRequestService itemRequestService;
 
 	private void createUserInDb() {
-		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email, birthday) " +
-				"VALUES (:id , :name , :email , :birthday);");
+		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email) " +
+				"VALUES (:id , :name , :email);");
 		userQuery.setParameter("id", "1");
 		userQuery.setParameter("name", "Ivan Ivanov");
 		userQuery.setParameter("email", "ivan@email");
-		userQuery.setParameter("birthday", LocalDate.of(2021, 7, 1));
 		userQuery.executeUpdate();
 	}
 
@@ -61,12 +59,12 @@ class ItemRequestServiceIntegrationTest {
 	void should_create_item_request() {
 		createUserInDb();
 
-		CreateRequest CreateRequest = new CreateRequest("description", 1L);
+		CreateRequest createRequest = new CreateRequest("description", 1L);
 
-		ItemRequestDto findItemRequest = itemRequestService.create(1L, CreateRequest);
+		ItemRequestDto findItemRequest = itemRequestService.create(1L, createRequest);
 
 		MatcherAssert.assertThat(findItemRequest.getId(), CoreMatchers.notNullValue());
-		MatcherAssert.assertThat(findItemRequest.getDescription(), Matchers.equalTo(CreateRequest.getDescription()));
+		MatcherAssert.assertThat(findItemRequest.getDescription(), Matchers.equalTo(createRequest.getDescription()));
 		MatcherAssert.assertThat(findItemRequest.getRequestorId(), CoreMatchers.notNullValue());
 	}
 

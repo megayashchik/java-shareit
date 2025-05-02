@@ -23,7 +23,7 @@ public class ItemRequestMapperTest {
 	private final User user = new User(1L, "john.doe@mail.com", "John Doe");
 	private final Item item = new Item(1L, "name", "description", Boolean.TRUE, user, 1L);
 
-	private final CreateRequest CreateRequest = new CreateRequest("description", 1L);
+	private final CreateRequest createRequest = new CreateRequest("description", 1L);
 	private final UpdateRequest updRequest = new UpdateRequest(1L, "description", 1L, now);
 	private final ItemRequest itemRequest = new ItemRequest(1L, "description", user, now);
 
@@ -48,7 +48,7 @@ public class ItemRequestMapperTest {
 
 	@Test
 	public void should_map_create_request_to_item_request_correctly() {
-		ItemRequest ir = ItemRequestMapper.mapToItemRequest(CreateRequest, user, now);
+		ItemRequest ir = ItemRequestMapper.mapToItemRequest(createRequest, user, now);
 		assertThat(ir.getDescription(), equalTo(itemRequest.getDescription()));
 		assertThat(ir.getCreated(), equalTo(itemRequest.getCreated()));
 		assertThat(ir.getRequestor(), equalTo(itemRequest.getRequestor()));

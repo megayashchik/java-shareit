@@ -45,15 +45,15 @@ public class BookingServiceImpl implements BookingService {
 				.orElseThrow(() -> new NotFoundException("Вещь с id = " + request.getItemId() + " не найдена"));
 
 		if (!item.getAvailable()) {
-			throw new IllegalArgumentException("Вещь не доступна для бронирования");
+			throw new NotBookedException("Вещь не доступна для бронирования");
 		}
 
 		if (item.getUser().getId().equals(userId)) {
-			throw new IllegalArgumentException("Нельзя забронировать свою вещь");
+			throw new NotBookedException("Нельзя забронировать свою вещь");
 		}
 
 		if (!request.getEnd().isAfter(request.getStart())) {
-			throw new IllegalArgumentException("Дата окончания " +
+			throw new NotBookedException("Дата окончания " +
 					"бронирования должна быть позже даты начала бронирования");
 		}
 
@@ -76,7 +76,7 @@ public class BookingServiceImpl implements BookingService {
 		}
 
 		if (booking.getStatus() != Status.WAITING) {
-			throw new IllegalArgumentException("Бронирование подтверждено или отклонено");
+			throw new NotBookedException("Бронирование подтверждено или отклонено");
 		}
 
 		if (approve) {

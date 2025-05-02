@@ -130,7 +130,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 				.toList();
 
 		Map<Long, List<Item>> requestItems = itemRepository
-				.findByRequestIds(requestIds)
+				.findByRequestIdIn(requestIds)
 				.stream()
 				.collect(groupingBy(Item::getRequestId, toList()));
 

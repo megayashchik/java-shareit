@@ -13,7 +13,6 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.UpdateItemRequest;
 import ru.practicum.shareit.item.service.ItemService;
 
-import java.util.Collection;
 import java.util.List;
 
 @Slf4j
@@ -42,7 +41,7 @@ public class ItemController {
 		return (createdItem);
 	}
 
-	@PatchMapping("/{itemId}")
+	@PatchMapping(id)
 	@ResponseStatus(HttpStatus.OK)
 	public ItemDto update(@PathVariable("itemId") Long itemId,
 	                      @RequestHeader("X-Sharer-User-Id") Long ownerId,
@@ -54,7 +53,7 @@ public class ItemController {
 		return updatedItem;
 	}
 
-	@GetMapping("/{itemId}")
+	@GetMapping(id)
 	@ResponseStatus(HttpStatus.OK)
 	public ItemDetailsDto findById(@PathVariable("itemId") Long itemId,
 	                               @RequestHeader("X-Sharer-User-Id") Long userId) {
@@ -64,7 +63,7 @@ public class ItemController {
 		return foundItem;
 	}
 
-	@DeleteMapping("/{itemId}")
+	@DeleteMapping(id)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteById(@RequestHeader("X-Sharer-User-Id") Long ownerId,
 	                       @PathVariable("itemId") Long itemId) {
@@ -83,18 +82,18 @@ public class ItemController {
 		return allItems;
 	}
 
-	@GetMapping("/search")
+	@GetMapping(search)
 	@ResponseStatus(HttpStatus.OK)
-	public Collection<ItemDto> findItemsByText(@RequestHeader(headerUserId) Long ownerId,
+	public List<ItemDto> findItemsByText(@RequestHeader(headerUserId) Long ownerId,
 	                                           @RequestParam(name = "text", defaultValue = "") String text) {
 		log.info("Запрос на поиск вещей по тексту: {}", text);
-		Collection<ItemDto> allItems = itemService.findItemsByBooker(ownerId, text);
+		List<ItemDto> allItems = itemService.findItemsByBooker(ownerId, text);
 		log.info("Список вещей: {}", allItems);
 
 		return allItems;
 	}
 
-	@PostMapping("/{itemId}/comment")
+	@PostMapping(itemComment)
 	@ResponseStatus(HttpStatus.CREATED)
 	public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
 	                             @PathVariable Long itemId,

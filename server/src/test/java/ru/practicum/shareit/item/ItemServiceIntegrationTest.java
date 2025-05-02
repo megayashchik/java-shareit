@@ -21,7 +21,6 @@ import ru.practicum.shareit.item.dto.UpdateItemRequest;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.service.ItemService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,12 +39,11 @@ class ItemServiceIntegrationTest {
 	private final ItemService itemService;
 
 	private void createUserInDb() {
-		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email, birthday) " +
-				"VALUES (:id , :name , :email , :birthday);");
+		Query userQuery = em.createNativeQuery("INSERT INTO Users (id, name, email) " +
+				"VALUES (:id , :name , :email);");
 		userQuery.setParameter("id", "1");
 		userQuery.setParameter("name", "Ivan Ivanov");
 		userQuery.setParameter("email", "ivan@email");
-		userQuery.setParameter("birthday", LocalDate.of(2021, 7, 1));
 		userQuery.executeUpdate();
 	}
 
@@ -151,7 +149,6 @@ class ItemServiceIntegrationTest {
 
 		MatcherAssert.assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
 	}
-
 
 	@Test
 	void should_find_item_by_id_with_details() {

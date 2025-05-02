@@ -122,7 +122,7 @@ class ItemControllerTest {
 	void should_delete_item() throws Exception {
 		mvc.perform(delete(urlTemplate + "/" + anyLong())
 						.header(headerUserId, anyLong()))
-				.andExpect(status().isOk());
+				.andExpect(status().isNoContent()); // было isOk
 
 		verify(itemService, times(1)).delete(anyLong(), anyLong());
 	}

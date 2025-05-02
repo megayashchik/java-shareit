@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = BookingController.class)
@@ -93,6 +94,7 @@ class BookingControllerTest {
 						.contentType(MediaType.APPLICATION_JSON)
 						.header(headerUserId, 1L)
 						.accept(MediaType.APPLICATION_JSON))
+				.andDo(print())
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$").exists())
 				.andExpect(content().json(mapper.writeValueAsString(requestDto)));
