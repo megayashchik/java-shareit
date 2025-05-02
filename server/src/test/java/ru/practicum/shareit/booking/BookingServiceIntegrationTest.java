@@ -19,6 +19,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.enums.State;
 import ru.practicum.shareit.enums.Status;
+import ru.practicum.shareit.exception.NotBookedException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.user.dto.UserDto;
 
@@ -29,6 +30,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -154,6 +156,79 @@ class BookingServiceIntegrationTest {
 		assertThat(booking.getStatus(), Matchers.equalTo(Status.WAITING));
 		assertThat(booking.getBooker(), CoreMatchers.notNullValue());
 		assertThat(booking.getBooker().getClass(), CoreMatchers.equalTo(UserDto.class));
+	}
+
+	//-------
+
+	@Test
+	void should_fail_create_booking_when_item_not_available() {
+		createUser1InDb();
+		createUser2InDb();
+
+		Query unavailableItem =
+				em.createNativeQuery("INSERT INTO Items (id, name, description, available, owner_id, request_id) " +
+						"VALUES (:id , :name , :description , :available , :owner_id , :request_id);");
+		unavailableItem.setParameter("id", 2);
+		unavailableItem.setParameter("name", "item2");
+		unavailableItem.setParameter("description", "desc");
+		unavailableItem.setParameter("available", Boolean.FALSE);
+		unavailableItem.setParameter("owner_id", 1);
+		unavailableItem.setParameter("request_id", null);
+		unavailableItem.executeUpdate();
+
+		CreateBookingRequest request = new CreateBookingRequest(
+				LocalDateTime.of(2024, 7, 1, 19, 30, 15),
+				LocalDateTime.of(2024, 7, 2, 19, 30, 15),
+				2L, 2L
+		);
+
+		assertThrows(NotBookedException.class, () -> bookingService.create(2L, request));
+	}
+
+	@Test
+	void should_fail_create_booking_when_user_is_owner() {
+		createUser1InDb();
+		createItemInDb();
+
+		CreateBookingRequest request = new CreateBookingRequest(
+				LocalDateTime.of(2024, 7, 1, 19, 30, 15),
+				LocalDateTime.of(2024, 7, 2, 19, 30, 15),
+				1L, 1L // bookerId == ownerId
+		);
+
+		assertThrows(NotBookedException.class, () -> bookingService.create(1L, request));
+	}
+
+	@Test
+	void should_fail_create_booking_when_end_before_start() {
+		createUser1InDb();
+		createUser2InDb();
+		createItemInDb();
+
+		CreateBookingRequest request = new CreateBookingRequest(
+				LocalDateTime.of(2024, 7, 2, 19, 30, 15), // позже
+				LocalDateTime.of(2024, 7, 1, 19, 30, 15), // раньше
+				1L, 2L
+		);
+
+		assertThrows(NotBookedException.class, () -> bookingService.create(2L, request));
+	}
+
+	@Test
+	void should_fail_approve_already_approved_booking() {
+		createUser1InDb();
+		createUser2InDb();
+		createItemInDb();
+
+		CreateBookingRequest request = new CreateBookingRequest(
+				LocalDateTime.of(2024, 7, 1, 19, 30, 15),
+				LocalDateTime.of(2024, 7, 2, 19, 30, 15),
+				1L, 2L
+		);
+		BookingDto booking = bookingService.create(2L, request);
+		bookingService.approveBooking(booking.getId(), 1L, true);
+
+		assertThrows(NotBookedException.class, () -> bookingService.approveBooking(booking.getId(), 1L, true));
 	}
 
 	@Test

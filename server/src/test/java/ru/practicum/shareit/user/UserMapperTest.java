@@ -9,6 +9,7 @@ import ru.practicum.shareit.user.model.User;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UserMapperTest {
 	private final CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
@@ -46,5 +47,27 @@ public class UserMapperTest {
 		assertThat(us.getId(), equalTo(user.getId()));
 		assertThat(us.getName(), equalTo(user.getName()));
 		assertThat(us.getEmail(), equalTo(user.getEmail()));
+	}
+
+	@Test
+	void should_not_update_user_when_fields_are_null() {
+		User user = new User(1L, "initial@mail.com", "Initial Name");
+		UpdateUserRequest request = new UpdateUserRequest(1L, null, null);
+
+		User result = UserMapper.updateUser(user, request);
+
+		assertEquals("initial@mail.com", result.getEmail());
+		assertEquals("Initial Name", result.getName());
+	}
+
+	@Test
+	void should_not_update_email_if_same_as_existing() {
+		User user = new User(1L, "same@mail.com", "Name");
+		UpdateUserRequest request = new UpdateUserRequest(1L, "same@mail.com", "Updated Name");
+
+		User result = UserMapper.updateUser(user, request);
+
+		assertEquals("same@mail.com", result.getEmail());
+		assertEquals("Updated Name", result.getName());
 	}
 }
