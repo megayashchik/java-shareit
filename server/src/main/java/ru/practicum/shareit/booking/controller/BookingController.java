@@ -56,7 +56,7 @@ public class BookingController {
 	@ResponseStatus(HttpStatus.OK)
 	public BookingDto approve(@PathVariable(pvBookingId) Long bookingId,
 	                          @RequestHeader(headerUserId) Long userId,
-	                          @RequestParam(name = "approved", defaultValue = "false") Boolean approve) {
+	                          @RequestParam(name = "approve", defaultValue = "false") Boolean approve) {
 		log.info("Подтверждение статуса бронирования с id = {}", bookingId);
 		BookingDto approvedResponse = bookingService.approveBooking(bookingId, userId, approve);
 		log.info("Подтверждение статуса бронирования с id = {} завершено, статус бронирования {}", bookingId, approve);
