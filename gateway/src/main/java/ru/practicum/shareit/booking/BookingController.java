@@ -52,9 +52,9 @@ public class BookingController {
 	@ResponseStatus(HttpStatus.OK)
 	public ResponseEntity<Object> approve(@PathVariable(pvBookingId) Long bookingId,
 	                                      @RequestHeader(headerUserId) Long userId,
-	                                      @RequestParam(name = "approve", defaultValue = "false") Boolean approve) {
+	                                      @RequestParam(name = "approved", defaultValue = "false") Boolean approved) {
 		log.info("Подтверждение статуса бронирования с id = {}", bookingId);
-		return bookingClient.approve(bookingId, userId, approve);
+		return bookingClient.approve(bookingId, userId, approved);
 	}
 
 	@GetMapping(id)

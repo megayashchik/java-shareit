@@ -13,7 +13,7 @@ public interface BookingService {
 
 	void delete(Long bookingId);
 
-	BookingDto approveBooking(Long bookingId, Long userId, Boolean approve);
+	BookingDto approveBooking(Long bookingId, Long userId, Boolean approved);
 
 	BookingDto findBookingById(Long bookingId, Long userId);
 

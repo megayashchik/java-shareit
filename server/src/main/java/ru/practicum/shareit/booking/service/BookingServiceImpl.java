@@ -64,7 +64,7 @@ public class BookingServiceImpl implements BookingService {
 
 	@Override
 	@Transactional
-	public BookingDto approveBooking(Long bookingId, Long userId, Boolean approve) {
+	public BookingDto approveBooking(Long bookingId, Long userId, Boolean approved) {
 		log.info("Подтверждение или отклонение запроса на бронирование с id = {} владельца с id = {}",
 				bookingId, userId);
 		Booking booking = findBookingById(bookingId);
@@ -78,7 +78,7 @@ public class BookingServiceImpl implements BookingService {
 			throw new NotBookedException("Бронирование подтверждено или отклонено");
 		}
 
-		if (approve) {
+		if (approved) {
 			booking.setStatus(Status.APPROVED);
 		} else {
 			booking.setStatus(Status.REJECTED);
