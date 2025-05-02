@@ -29,7 +29,6 @@ public class ItemController {
 	private final String headerUserId = "X-Sharer-User-Id";
 	private final String pvItemId = "item-id";
 
-
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public ItemDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
@@ -38,12 +37,12 @@ public class ItemController {
 		ItemDto createdItem = itemService.create(userId, request);
 		log.info("Создана новая вещь: {}", createdItem);
 
-		return (createdItem);
+		return createdItem;
 	}
 
 	@PatchMapping(id)
 	@ResponseStatus(HttpStatus.OK)
-	public ItemDto update(@PathVariable("itemId") Long itemId,
+	public ItemDto update(@PathVariable("item-id") Long itemId,
 	                      @RequestHeader("X-Sharer-User-Id") Long ownerId,
 	                      @Valid @RequestBody UpdateItemRequest request) {
 		log.info("Запрос на обновление описания вещи c id = {} от пользователя {}: {}", itemId, ownerId, request);
@@ -55,7 +54,7 @@ public class ItemController {
 
 	@GetMapping(id)
 	@ResponseStatus(HttpStatus.OK)
-	public ItemDetailsDto findById(@PathVariable("itemId") Long itemId,
+	public ItemDetailsDto findById(@PathVariable("item-id") Long itemId,
 	                               @RequestHeader("X-Sharer-User-Id") Long userId) {
 		log.info("Запрос на поиск вещи по id = : {} от пользователя с id = {}", itemId, userId);
 		ItemDetailsDto foundItem = itemService.findItemById(userId, itemId);
@@ -66,7 +65,7 @@ public class ItemController {
 	@DeleteMapping(id)
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteById(@RequestHeader("X-Sharer-User-Id") Long ownerId,
-	                       @PathVariable("itemId") Long itemId) {
+	                       @PathVariable("item-id") Long itemId) {
 		log.info("Запрос на удаление вещи с id = {} от владельца {}", itemId, ownerId);
 		itemService.delete(ownerId, itemId);
 		log.info("Удалена вещь с id = {}", itemId);
@@ -85,7 +84,7 @@ public class ItemController {
 	@GetMapping(search)
 	@ResponseStatus(HttpStatus.OK)
 	public List<ItemDto> findItemsByText(@RequestHeader(headerUserId) Long ownerId,
-	                                           @RequestParam(name = "text", defaultValue = "") String text) {
+	                                     @RequestParam(name = "text", defaultValue = "") String text) {
 		log.info("Запрос на поиск вещей по тексту: {}", text);
 		List<ItemDto> allItems = itemService.findItemsByBooker(ownerId, text);
 		log.info("Список вещей: {}", allItems);
@@ -96,7 +95,7 @@ public class ItemController {
 	@PostMapping(itemComment)
 	@ResponseStatus(HttpStatus.CREATED)
 	public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") Long userId,
-	                             @PathVariable Long itemId,
+	                             @PathVariable("item-id") Long itemId,
 	                             @Valid @RequestBody CreateCommentRequest request) {
 		log.info("Запрос на добавление комментария к вещи с id = {} от пользователя с id = {}", itemId, userId);
 		CommentDto comment = itemService.addComment(itemId, userId, request);

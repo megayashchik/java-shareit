@@ -78,19 +78,33 @@ public class ItemServiceImpl implements ItemService {
 	@Transactional
 	public ItemDto update(Long itemId, UpdateItemRequest request, Long ownerId) {
 		log.info("Обновление вещи для пользователя с id = {}, запрос: {}", ownerId, request);
-
 		Item item = findItemById(itemId);
 
+		User foundUser = findUserById(ownerId);
 		if (!item.getUser().getId().equals(ownerId)) {
 			throw new NotOwnerException("Редактировать данные вещи может только её владелец");
+		}
+
+		if (request == null) {
+			throw new IllegalArgumentException("Запрос на обновление не может быть null");
+		}
+
+		if (request.getName() != null && request.getName().isBlank()) {
+			throw new IllegalArgumentException("Название не может быть пустым");
+		}
+
+		if (request.getDescription() != null && request.getDescription().isBlank()) {
+			throw new IllegalArgumentException("Описание не может быть пустым");
 		}
 
 		if (request.getName() != null) {
 			item.setName(request.getName());
 		}
+
 		if (request.getDescription() != null) {
 			item.setDescription(request.getDescription());
 		}
+
 		if (request.getAvailable() != null) {
 			item.setAvailable(request.getAvailable());
 		}
@@ -177,7 +191,7 @@ public class ItemServiceImpl implements ItemService {
 		User author = findUserById(userId);
 		Item item = findItemById(itemId);
 
-		LocalDateTime current = LocalDateTime.now().plusHours(3);
+		LocalDateTime current = LocalDateTime.now();
 		if (!bookingRepository.existsByBookerIdAndItemIdAndEndBefore(userId, itemId, current)) {
 			throw new NotBookedException(String.format("Пользователь %s не может оставить комментарий, " +
 					"так как не пользовался вещью %s", author.getName(), item.getName()));

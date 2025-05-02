@@ -17,7 +17,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.anyLong;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,7 +30,7 @@ class UserServiceTest {
 
 	@Test
 	void should_fail_find_user_when_id_not_found() {
-		when((userRepository).findById(anyLong())).thenReturn(Optional.empty());
+		when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
 		assertThrows(NotFoundException.class, () -> userService.findById(2L));
 	}
@@ -39,8 +39,7 @@ class UserServiceTest {
 	void should_fail_create_user_when_email_exists() {
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
-		when(userRepository.findByEmail(newUser.getEmail()))
-				.thenReturn(Optional.of(new User(1L, "john.doe@mail.com", "Some User")));
+		when(userRepository.existsByEmail(newUser.getEmail())).thenReturn(true);
 
 		DuplicateEmailException thrown = assertThrows(DuplicateEmailException.class, () -> {
 			userService.create(newUser);
@@ -57,12 +56,10 @@ class UserServiceTest {
 
 		UpdateUserRequest updateRequest = new UpdateUserRequest(userId, newEmail, "New Name");
 
-
 		User existingUser = new User(userId, "old@mail.com", "Old Name");
 		when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
 
-		User anotherUser = new User(2L, newEmail, "Another User");
-		when(userRepository.findByEmail(newEmail)).thenReturn(Optional.of(anotherUser));
+		when(userRepository.existsByEmail(newEmail)).thenReturn(true);
 
 		DuplicateEmailException thrown = assertThrows(DuplicateEmailException.class, () -> {
 			userService.update(userId, updateRequest);
@@ -75,7 +72,7 @@ class UserServiceTest {
 	void should_fail_update_user_when_id_missing() {
 		UpdateUserRequest newUser = new UpdateUserRequest(1L, "john.doe@mail.com", "John Doe");
 
-		NotFoundException thrown = assertThrows(NotFoundException.class, () -> {
+		IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
 			userService.update(null, newUser);
 		});
 

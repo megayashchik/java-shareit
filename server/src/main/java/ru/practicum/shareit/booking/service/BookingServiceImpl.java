@@ -21,7 +21,6 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
@@ -133,7 +132,6 @@ public class BookingServiceImpl implements BookingService {
 		State currentState = State.valueOf(state);
 		findUserById(userId);
 
-		LocalDateTime now = LocalDateTime.now();
 		List<Booking> bookings = switch (currentState) {
 			case ALL -> bookingRepository.findAllByOwner(userId);
 			case CURRENT -> bookingRepository.findAllCurrentByOwner(userId);

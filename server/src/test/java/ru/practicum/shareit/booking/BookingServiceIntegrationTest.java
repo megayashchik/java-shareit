@@ -30,7 +30,6 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-
 @Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @SpringBootTest(
@@ -75,11 +74,11 @@ class BookingServiceIntegrationTest {
 	private void createBookingInDb() {
 		Query bookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		bookingQuery.setParameter("id", "1");
 		bookingQuery.setParameter("startDate",
 				LocalDateTime.of(2024, 7, 1, 19, 30, 15));
-		bookingQuery.setParameter("eneDate",
+		bookingQuery.setParameter("endDate",
 				LocalDateTime.of(2024, 7, 2, 19, 30, 15));
 		bookingQuery.setParameter("itemId", 1L);
 		bookingQuery.setParameter("status", Status.APPROVED);
@@ -90,11 +89,11 @@ class BookingServiceIntegrationTest {
 	private void createCurrentBookingInDb() {
 		Query currentBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		currentBookingQuery.setParameter("id", "1");
 		currentBookingQuery.setParameter("startDate",
 				LocalDateTime.of(2022, 7, 1, 19, 30, 15));
-		currentBookingQuery.setParameter("eneDate",
+		currentBookingQuery.setParameter("endDate",
 				LocalDateTime.of(2026, 7, 2, 19, 30, 15));
 		currentBookingQuery.setParameter("itemId", 1L);
 		currentBookingQuery.setParameter("status", Status.APPROVED);
@@ -105,11 +104,11 @@ class BookingServiceIntegrationTest {
 	private void createLastBookingInDb() {
 		Query lastBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		lastBookingQuery.setParameter("id", "2");
 		lastBookingQuery.setParameter("startDate",
 				LocalDateTime.of(2024, 7, 1, 19, 30, 15));
-		lastBookingQuery.setParameter("eneDate",
+		lastBookingQuery.setParameter("endDate",
 				LocalDateTime.of(2024, 7, 2, 19, 30, 15));
 		lastBookingQuery.setParameter("itemId", 1L);
 		lastBookingQuery.setParameter("status", Status.APPROVED);
@@ -120,12 +119,12 @@ class BookingServiceIntegrationTest {
 	private void createNextBookingInDb() {
 		Query nextBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		nextBookingQuery.setParameter("id", "3");
 		nextBookingQuery.setParameter("startDate",
-				LocalDateTime.of(2024, 12, 1, 19, 30, 15));
-		nextBookingQuery.setParameter("eneDate",
-				LocalDateTime.of(2024, 12, 2, 19, 30, 15));
+				LocalDateTime.of(2025, 6, 1, 19, 30, 15));
+		nextBookingQuery.setParameter("endDate",
+				LocalDateTime.of(2025, 6, 2, 19, 30, 15));
 		nextBookingQuery.setParameter("itemId", 1L);
 		nextBookingQuery.setParameter("status", Status.APPROVED);
 		nextBookingQuery.setParameter("bookerId", 1L);

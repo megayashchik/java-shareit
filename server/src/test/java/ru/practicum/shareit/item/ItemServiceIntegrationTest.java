@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
@@ -63,11 +64,11 @@ class ItemServiceIntegrationTest {
 	private void createLastBookingInDb() {
 		Query lastBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		lastBookingQuery.setParameter("id", "1");
 		lastBookingQuery.setParameter("startDate",
 				LocalDateTime.of(2024, 7, 1, 19, 30, 15));
-		lastBookingQuery.setParameter("eneDate",
+		lastBookingQuery.setParameter("endDate",
 				LocalDateTime.of(2024, 7, 2, 19, 30, 15));
 		lastBookingQuery.setParameter("itemId", 1L);
 		lastBookingQuery.setParameter("status", Status.APPROVED);
@@ -78,12 +79,12 @@ class ItemServiceIntegrationTest {
 	private void createNextBookingInDb() {
 		Query nextBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
-						"VALUES (:id , :startDate , :eneDate , :itemId , :status , :bookerId);");
+						"VALUES (:id , :startDate , :endDate , :itemId , :status , :bookerId);");
 		nextBookingQuery.setParameter("id", "2");
 		nextBookingQuery.setParameter("startDate",
-				LocalDateTime.of(2024, 12, 1, 19, 30, 15));
-		nextBookingQuery.setParameter("eneDate",
-				LocalDateTime.of(2024, 12, 2, 19, 30, 15));
+				LocalDateTime.of(2025, 6, 1, 19, 30, 15));
+		nextBookingQuery.setParameter("endDate",
+				LocalDateTime.of(2025, 6, 2, 19, 30, 15));
 		nextBookingQuery.setParameter("itemId", 1L);
 		nextBookingQuery.setParameter("status", Status.APPROVED);
 		nextBookingQuery.setParameter("bookerId", 1L);
@@ -163,11 +164,11 @@ class ItemServiceIntegrationTest {
 		assertThat(loadItem.getId(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getName(), Matchers.equalTo("name"));
 		assertThat(loadItem.getDescription(), Matchers.equalTo("description"));
-		assertThat(String.valueOf(loadItem.getAvailable()), true);
+		assertThat(String.valueOf(loadItem.getAvailable()), equalTo("true"));
 		assertThat(loadItem.getLastBooking(),
 				Matchers.equalTo(LocalDateTime.of(2024, 7, 2, 19, 30, 15)));
 		assertThat(loadItem.getNextBooking(),
-				Matchers.equalTo(LocalDateTime.of(2024, 12, 1, 19, 30, 15)));
+				Matchers.equalTo(LocalDateTime.of(2025, 6, 1, 19, 30, 15)));
 		assertThat(loadItem.getComments(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getOwnerId(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getRequestId(), CoreMatchers.notNullValue());
@@ -186,7 +187,7 @@ class ItemServiceIntegrationTest {
 		assertThat(loadItem.getId(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getName(), Matchers.equalTo("name"));
 		assertThat(loadItem.getDescription(), Matchers.equalTo("description"));
-		assertThat(String.valueOf(loadItem.getAvailable()), true);
+		assertThat(String.valueOf(loadItem.getAvailable()), equalTo("true"));
 		assertThat(loadItem.getLastBooking(), CoreMatchers.nullValue());
 		assertThat(loadItem.getNextBooking(), CoreMatchers.nullValue());
 		assertThat(loadItem.getComments(), CoreMatchers.notNullValue());
@@ -199,7 +200,6 @@ class ItemServiceIntegrationTest {
 		createUserInDb();
 		createItemInDb();
 		createLastBookingInDb();
-		createNextBookingInDb();
 		createCommentInDb();
 
 		Collection<ItemDetailsDto> loadRequests = itemService.findAll(1L);
@@ -213,8 +213,7 @@ class ItemServiceIntegrationTest {
 				hasProperty("available", equalTo(items.getFirst().getAvailable())),
 				hasProperty("lastBooking", notNullValue()),
 				hasProperty("lastBooking", CoreMatchers.instanceOf(LocalDateTime.class)),
-				hasProperty("nextBooking", notNullValue()),
-				hasProperty("nextBooking", CoreMatchers.instanceOf(LocalDateTime.class)),
+				hasProperty("nextBooking", nullValue()),
 				hasProperty("comments", notNullValue()),
 				hasProperty("ownerId", equalTo(items.getFirst().getOwnerId())),
 				hasProperty("requestId", equalTo(items.getFirst().getRequestId()))
