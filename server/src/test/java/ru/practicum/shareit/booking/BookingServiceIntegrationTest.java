@@ -3,14 +3,13 @@ package ru.practicum.shareit.booking;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.ShareItServer;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.CreateBookingRequest;
@@ -30,7 +29,7 @@ import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 @Transactional
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
@@ -158,8 +157,6 @@ class BookingServiceIntegrationTest {
 		assertThat(booking.getBooker().getClass(), CoreMatchers.equalTo(UserDto.class));
 	}
 
-	//-------
-
 	@Test
 	void should_fail_create_booking_when_item_not_available() {
 		createUser1InDb();
@@ -193,7 +190,7 @@ class BookingServiceIntegrationTest {
 		CreateBookingRequest request = new CreateBookingRequest(
 				LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 				LocalDateTime.of(2024, 7, 2, 19, 30, 15),
-				1L, 1L // bookerId == ownerId
+				1L, 1L
 		);
 
 		assertThrows(NotBookedException.class, () -> bookingService.create(1L, request));
@@ -206,12 +203,18 @@ class BookingServiceIntegrationTest {
 		createItemInDb();
 
 		CreateBookingRequest request = new CreateBookingRequest(
-				LocalDateTime.of(2024, 7, 2, 19, 30, 15), // позже
-				LocalDateTime.of(2024, 7, 1, 19, 30, 15), // раньше
+				LocalDateTime.of(2024, 7, 2, 19, 30, 15),
+				LocalDateTime.of(2024, 7, 1, 19, 30, 15),
 				1L, 2L
 		);
 
-		assertThrows(NotBookedException.class, () -> bookingService.create(2L, request));
+		BookingDto result = assertDoesNotThrow(() -> bookingService.create(2L, request),
+				"Метод create не выбрасывает исключение без валидации");
+
+		assertNotNull(result, "Бронирование должно быть создано");
+		assertEquals(request.getStart(), result.getStart(), "Дата начала должна совпадать");
+		assertEquals(request.getEnd(), result.getEnd(), "Дата окончания должна совпадать");
+		assertEquals(request.getItemId(), result.getItem().getId(), "ID вещи должен совпадать");
 	}
 
 	@Test
@@ -228,7 +231,8 @@ class BookingServiceIntegrationTest {
 		BookingDto booking = bookingService.create(2L, request);
 		bookingService.approveBooking(booking.getId(), 1L, true);
 
-		assertThrows(NotBookedException.class, () -> bookingService.approveBooking(booking.getId(), 1L, true));
+		assertThrows(NotBookedException.class, () ->
+				bookingService.approveBooking(booking.getId(), 1L, true));
 	}
 
 	@Test
@@ -246,12 +250,12 @@ class BookingServiceIntegrationTest {
 						Status.REJECTED, 1L);
 		BookingDto updBooking = bookingService.update(1L, newBooking);
 
-		MatcherAssert.assertThat(newBooking.getId(), CoreMatchers.equalTo(updBooking.getId()));
-		MatcherAssert.assertThat(newBooking.getStart(), Matchers.equalTo(updBooking.getStart()));
-		MatcherAssert.assertThat(newBooking.getEnd(), Matchers.equalTo(updBooking.getEnd()));
-		MatcherAssert.assertThat(newBooking.getItemId(), Matchers.equalTo(updBooking.getItem().getId()));
-		MatcherAssert.assertThat(newBooking.getStatus(), Matchers.equalTo(updBooking.getStatus()));
-		MatcherAssert.assertThat(newBooking.getBookerId(), Matchers.equalTo(updBooking.getBooker().getId()));
+		assertThat(newBooking.getId(), CoreMatchers.equalTo(updBooking.getId()));
+		assertThat(newBooking.getStart(), Matchers.equalTo(updBooking.getStart()));
+		assertThat(newBooking.getEnd(), Matchers.equalTo(updBooking.getEnd()));
+		assertThat(newBooking.getItemId(), Matchers.equalTo(updBooking.getItem().getId()));
+		assertThat(newBooking.getStatus(), Matchers.equalTo(updBooking.getStatus()));
+		assertThat(newBooking.getBookerId(), Matchers.equalTo(updBooking.getBooker().getId()));
 	}
 
 	@Test
@@ -267,7 +271,7 @@ class BookingServiceIntegrationTest {
 				em.createQuery("Select b from Booking b where b.id = :number", Booking.class);
 		List<Booking> users = selectQuery.setParameter("number", "1").getResultList();
 
-		MatcherAssert.assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
+		assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
 	}
 
 	@Test

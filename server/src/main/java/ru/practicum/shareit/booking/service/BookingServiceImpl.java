@@ -36,9 +36,6 @@ public class BookingServiceImpl implements BookingService {
 	@Transactional
 	public BookingDto create(Long userId, CreateBookingRequest request) {
 		log.info("Запрос на создание бронирования от пользователя с id = {}", userId);
-		if (request == null) {
-			throw new IllegalArgumentException("Запрос на бронирование не может быть пустым");
-		}
 		User booker = findUserById(userId);
 		Item item = itemRepository.findById(request.getItemId())
 				.orElseThrow(() -> new NotFoundException("Вещь с id = " + request.getItemId() + " не найдена"));
@@ -49,11 +46,6 @@ public class BookingServiceImpl implements BookingService {
 
 		if (item.getUser().getId().equals(userId)) {
 			throw new NotBookedException("Нельзя забронировать свою вещь");
-		}
-
-		if (!request.getEnd().isAfter(request.getStart())) {
-			throw new NotBookedException("Дата окончания " +
-					"бронирования должна быть позже даты начала бронирования");
 		}
 
 		Booking booking = bookingRepository.save(BookingMapper.mapToBooking(request, booker, item));

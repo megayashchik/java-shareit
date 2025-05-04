@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import io.micrometer.common.util.StringUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CreateCommentRequest;
 import ru.practicum.shareit.item.dto.CreateItemRequest;
 import ru.practicum.shareit.item.dto.UpdateItemRequest;
+
+import java.util.Collections;
 
 @Controller
 @Validated
@@ -61,6 +64,9 @@ public class ItemController {
 	@GetMapping(search)
 	public ResponseEntity<Object> findItemsForBooker(@RequestHeader(headerUserId) Long ownerId,
 	                                                 @RequestParam(name = "text", defaultValue = "") String text) {
+		if (StringUtils.isBlank(text)) {
+			return ResponseEntity.ok(Collections.emptyList());
+		}
 		log.info("Поиск вещи по тексту: {} от пользователя  с id = {}", text, ownerId);
 		return itemClient.findItems(search, ownerId, text);
 	}

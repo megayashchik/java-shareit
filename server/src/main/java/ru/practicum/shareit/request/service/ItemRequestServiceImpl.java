@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.exception.NotOwnerException;
 import ru.practicum.shareit.exception.ValidationException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -50,14 +51,20 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 	public ItemRequestDto update(Long userId, UpdateRequest request) {
 		log.info("Обновление запроса на вещь от пользователя с id = {}, запрос: {}", userId, request);
 
-		User findUser = findUserById(userId);
-
 		if (request.getId() == null) {
 			throw new ValidationException("ID запроса должен быть указан");
 		}
 
+		User findUser = findUserById(userId);
+		ItemRequest existingRequest = findRequestById(request.getId());
+
+		if (!existingRequest.getRequestor().getId().equals(userId)) {
+			throw new NotOwnerException("Пользователь с id = " + userId +
+					" не является автором запроса с id = " + request.getId());
+		}
+
 		ItemRequest updatedItem =
-				ItemRequestMapper.updateItemFields(findRequestById(request.getId()), request, findUser);
+				ItemRequestMapper.updateItemFields(existingRequest, request, findUser);
 		updatedItem = repository.save(updatedItem);
 		log.info("Обновлён запрос на вещь от пользователя c id = {}", userId);
 

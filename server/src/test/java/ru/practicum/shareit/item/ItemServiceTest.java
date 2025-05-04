@@ -20,6 +20,8 @@ import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.item.service.ItemServiceImpl;
+import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.dto.CreateUserRequest;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
@@ -34,8 +36,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 @ExtendWith(MockitoExtension.class)
@@ -49,6 +50,9 @@ class ItemServiceTest {
 	@Mock
 	private UserRepository userRepository;
 
+	@Mock
+	private RequestRepository requestRepository;
+
 	@InjectMocks
 	private ItemServiceImpl itemService;
 
@@ -58,25 +62,37 @@ class ItemServiceTest {
 	@Test
 	void should_create_item_successfully() {
 		Long ownerId = 1L;
+		Long requestId = 1L;
+
 		CreateItemRequest request =
-				new CreateItemRequest("name", "description", true, ownerId, null);
+				new CreateItemRequest("name", "description", true, ownerId, requestId);
 
 		User owner = new User(ownerId, "email", "name");
-		Item item = new Item(1L, "name", "description", true, owner, null);
+		Item item = new Item(1L, "name", "description", true, owner, requestId);
 		ItemDto expectedDto = ItemMapper.mapToItemDto(item);
 
 		when(userRepository.findById(ownerId)).thenReturn(Optional.of(owner));
+		when(requestRepository.findById(eq(requestId))).thenReturn(Optional.of(new ItemRequest()));
 		when(itemRepository.save(any(Item.class))).thenReturn(item);
 
 		ItemDto result = itemService.create(ownerId, request);
 
 		assertNotNull(result);
-		assertEquals(expectedDto.getId(), result.getId());
-		assertEquals(expectedDto.getName(), result.getName());
+		assertEquals("name", result.getName());
+		assertTrue(result.getAvailable());
+		assertEquals(ownerId, result.getOwnerId());
+		assertEquals(requestId, result.getRequestId());
+
+		verify(userRepository).findById(ownerId);
+		verify(requestRepository).findById(eq(requestId));
+		verify(itemRepository).save(any(Item.class));
 	}
 
 	@Test
 	void should_fail_add_comment_when_user_no_booked_item() {
+		when(requestRepository.findById(anyLong())).thenReturn(Optional.of(new ItemRequest()));
+		when(requestRepository.existsById(anyLong())).thenReturn(true);
+
 		CreateCommentRequest newComment = new CreateCommentRequest("comment", 1L, 1L);
 
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
@@ -110,6 +126,9 @@ class ItemServiceTest {
 
 	@Test
 	void should_fail_delete_item_when_user_not_owner() {
+		when(requestRepository.findById(anyLong())).thenReturn(Optional.of(new ItemRequest()));
+		when(requestRepository.existsById(anyLong())).thenReturn(true);
+
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
 		when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Optional.empty());
@@ -138,6 +157,9 @@ class ItemServiceTest {
 
 	@Test
 	void should_fail_update_item_when_user_not_owner() {
+		when(requestRepository.findById(anyLong())).thenReturn(Optional.of(new ItemRequest()));
+		when(requestRepository.existsById(anyLong())).thenReturn(true);
+
 		CreateUserRequest newUser = new CreateUserRequest("john.doe@mail.com", "John Doe");
 
 		when(userRepository.findByEmail(newUser.getEmail())).thenReturn(Optional.empty());

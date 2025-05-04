@@ -13,7 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ItemRequestDto {
-	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 

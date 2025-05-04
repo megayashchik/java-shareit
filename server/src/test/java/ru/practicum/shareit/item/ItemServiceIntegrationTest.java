@@ -1,17 +1,14 @@
 package ru.practicum.shareit.item;
 
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.hamcrest.CoreMatchers;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.enums.Status;
 import ru.practicum.shareit.item.comment.dto.CommentDto;
 import ru.practicum.shareit.item.comment.dto.CreateCommentRequest;
@@ -61,6 +58,16 @@ class ItemServiceIntegrationTest {
 		itemQuery.executeUpdate();
 	}
 
+	private void createRequestInDb(Long requestId, Long requestorId) {
+		Query requestQuery = em.createNativeQuery("INSERT INTO REQUESTS(id, description, requestor_id, created) " +
+				"VALUES (:id, :description, :requestor_id, :created);");
+		requestQuery.setParameter("id", requestId);
+		requestQuery.setParameter("description", "description");
+		requestQuery.setParameter("requestor_id", requestorId);
+		requestQuery.setParameter("created", LocalDateTime.now());
+		requestQuery.executeUpdate();
+	}
+
 	private void createLastBookingInDb() {
 		Query lastBookingQuery =
 				em.createNativeQuery("INSERT INTO Bookings (id, start_date, end_date, item_id, status, booker_id) " +
@@ -106,6 +113,7 @@ class ItemServiceIntegrationTest {
 	@Test
 	void should_create_item() {
 		createUserInDb();
+		createRequestInDb(1L, 1L);
 
 		CreateItemRequest newRequest = new CreateItemRequest("name", "description",
 				Boolean.TRUE, 1L, 1L);
@@ -113,9 +121,9 @@ class ItemServiceIntegrationTest {
 		ItemDto findItem = itemService.create(1L, newRequest);
 
 		assertThat(findItem.getId(), CoreMatchers.notNullValue());
-		assertThat(findItem.getName(), Matchers.equalTo(newRequest.getName()));
-		assertThat(findItem.getDescription(), Matchers.equalTo(newRequest.getDescription()));
-		assertThat(findItem.getAvailable(), Matchers.equalTo(newRequest.getAvailable()));
+		assertThat(findItem.getName(), equalTo(newRequest.getName()));
+		assertThat(findItem.getDescription(), equalTo(newRequest.getDescription()));
+		assertThat(findItem.getAvailable(), equalTo(newRequest.getAvailable()));
 		assertThat(findItem.getOwnerId(), CoreMatchers.notNullValue());
 		assertThat(findItem.getRequestId(), CoreMatchers.notNullValue());
 	}
@@ -130,11 +138,11 @@ class ItemServiceIntegrationTest {
 						Boolean.FALSE, 1L, 2L);
 		ItemDto findItemRequest = itemService.update(1L, updItemRequest, 1L);
 
-		MatcherAssert.assertThat(findItemRequest.getId(), CoreMatchers.equalTo(updItemRequest.getId()));
-		MatcherAssert.assertThat(findItemRequest.getName(), Matchers.equalTo(updItemRequest.getName()));
-		MatcherAssert.assertThat(findItemRequest.getDescription(), Matchers.equalTo(updItemRequest.getDescription()));
-		MatcherAssert.assertThat(findItemRequest.getAvailable(), Matchers.equalTo(updItemRequest.getAvailable()));
-		MatcherAssert.assertThat(findItemRequest.getOwnerId(), Matchers.equalTo(updItemRequest.getOwnerId()));
+		assertThat(findItemRequest.getId(), CoreMatchers.equalTo(updItemRequest.getId()));
+		assertThat(findItemRequest.getName(), equalTo(updItemRequest.getName()));
+		assertThat(findItemRequest.getDescription(), equalTo(updItemRequest.getDescription()));
+		assertThat(findItemRequest.getAvailable(), equalTo(updItemRequest.getAvailable()));
+		assertThat(findItemRequest.getOwnerId(), equalTo(updItemRequest.getOwnerId()));
 	}
 
 	@Test
@@ -148,7 +156,7 @@ class ItemServiceIntegrationTest {
 				em.createQuery("Select i from Item i where i.description like :description", Item.class);
 		List<Item> users = selectQuery.setParameter("description", "description1").getResultList();
 
-		MatcherAssert.assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
+		assertThat(users, CoreMatchers.equalTo(new ArrayList<>()));
 	}
 
 	@Test
@@ -162,13 +170,13 @@ class ItemServiceIntegrationTest {
 		ItemDetailsDto loadItem = itemService.findItemById(1L, 1L);
 
 		assertThat(loadItem.getId(), CoreMatchers.notNullValue());
-		assertThat(loadItem.getName(), Matchers.equalTo("name"));
-		assertThat(loadItem.getDescription(), Matchers.equalTo("description"));
+		assertThat(loadItem.getName(), equalTo("name"));
+		assertThat(loadItem.getDescription(), equalTo("description"));
 		assertThat(String.valueOf(loadItem.getAvailable()), equalTo("true"));
 		assertThat(loadItem.getLastBooking(),
-				Matchers.equalTo(LocalDateTime.of(2024, 7, 2, 19, 30, 15)));
+				equalTo(LocalDateTime.of(2024, 7, 2, 19, 30, 15)));
 		assertThat(loadItem.getNextBooking(),
-				Matchers.equalTo(LocalDateTime.of(2025, 6, 1, 19, 30, 15)));
+				equalTo(LocalDateTime.of(2025, 6, 1, 19, 30, 15)));
 		assertThat(loadItem.getComments(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getOwnerId(), CoreMatchers.notNullValue());
 		assertThat(loadItem.getRequestId(), CoreMatchers.notNullValue());
@@ -185,8 +193,8 @@ class ItemServiceIntegrationTest {
 		ItemDetailsDto loadItem = itemService.findItemById(999L, 1L);
 
 		assertThat(loadItem.getId(), CoreMatchers.notNullValue());
-		assertThat(loadItem.getName(), Matchers.equalTo("name"));
-		assertThat(loadItem.getDescription(), Matchers.equalTo("description"));
+		assertThat(loadItem.getName(), equalTo("name"));
+		assertThat(loadItem.getDescription(), equalTo("description"));
 		assertThat(String.valueOf(loadItem.getAvailable()), equalTo("true"));
 		assertThat(loadItem.getLastBooking(), CoreMatchers.nullValue());
 		assertThat(loadItem.getNextBooking(), CoreMatchers.nullValue());
@@ -223,6 +231,9 @@ class ItemServiceIntegrationTest {
 	@Test
 	void should_find_all_items_without_details() {
 		createUserInDb();
+		createRequestInDb(1L, 1L);
+		createRequestInDb(2L, 1L);
+		createRequestInDb(3L, 1L);
 
 		List<CreateItemRequest> items = List.of(
 				makeCreateItemRequest("name1", "description1", Boolean.TRUE, 1L, 1L),
@@ -255,6 +266,9 @@ class ItemServiceIntegrationTest {
 	@Test
 	void should_find_items_by_booker() {
 		createUserInDb();
+		createRequestInDb(1L, 1L);
+		createRequestInDb(2L, 1L);
+		createRequestInDb(3L, 1L);
 
 		List<CreateItemRequest> items = List.of(
 				makeCreateItemRequest("name1", "description1", Boolean.TRUE, 1L, 1L),
@@ -262,8 +276,24 @@ class ItemServiceIntegrationTest {
 				makeCreateItemRequest("name3", "description3", Boolean.TRUE, 1L, 3L)
 		);
 
+		List<Long> itemIds = new ArrayList<>();
 		for (CreateItemRequest itemRequest : items) {
-			itemService.create(1L, itemRequest);
+			ItemDto item = itemService.create(1L, itemRequest);
+			itemIds.add(item.getId());
+		}
+
+		for (int i = 0; i < itemIds.size(); i++) {
+			Query bookingQuery = em.createNativeQuery(
+					"INSERT INTO Bookings (id, start_date, end_date, item_id, booker_id, status) " +
+							"VALUES (:id, :start, :end, :itemId, :bookerId, :status);"
+			);
+			bookingQuery.setParameter("id", (long) (i + 1));
+			bookingQuery.setParameter("start", LocalDateTime.now().plusDays(1));
+			bookingQuery.setParameter("end", LocalDateTime.now().plusDays(2));
+			bookingQuery.setParameter("itemId", itemIds.get(i));
+			bookingQuery.setParameter("bookerId", 1L);
+			bookingQuery.setParameter("status", "APPROVED");
+			bookingQuery.executeUpdate();
 		}
 
 		Collection<ItemDto> loadRequests = itemService.findItemsByBooker(1L, "cript");
@@ -291,11 +321,11 @@ class ItemServiceIntegrationTest {
 		CreateCommentRequest newComment = new CreateCommentRequest("comment", 1L, 1L);
 		CommentDto findComment = itemService.addComment(1L, 1L, newComment);
 
-		MatcherAssert.assertThat(findComment.getId(), CoreMatchers.notNullValue());
-		MatcherAssert.assertThat(findComment.getText(), Matchers.equalTo(newComment.getText()));
-		MatcherAssert.assertThat(findComment.getItemId(), Matchers.equalTo(newComment.getItemId()));
-		MatcherAssert.assertThat(findComment.getAuthorName(), CoreMatchers.notNullValue());
-		MatcherAssert.assertThat(findComment.getCreated(), CoreMatchers.notNullValue());
+		assertThat(findComment.getId(), CoreMatchers.notNullValue());
+		assertThat(findComment.getText(), equalTo(newComment.getText()));
+		assertThat(findComment.getItemId(), equalTo(newComment.getItemId()));
+		assertThat(findComment.getAuthorName(), CoreMatchers.notNullValue());
+		assertThat(findComment.getCreated(), CoreMatchers.notNullValue());
 	}
 
 	private CreateItemRequest makeCreateItemRequest(String name, String description,

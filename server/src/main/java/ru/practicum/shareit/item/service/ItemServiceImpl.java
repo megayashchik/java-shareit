@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.service;
 
-import io.micrometer.common.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,7 @@ import ru.practicum.shareit.item.dto.UpdateItemRequest;
 import ru.practicum.shareit.item.mapper.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 
@@ -44,6 +44,7 @@ public class ItemServiceImpl implements ItemService {
 	private final UserRepository userRepository;
 	private final BookingRepository bookingRepository;
 	private final CommentRepository commentRepository;
+	private final RequestRepository requestRepository;
 
 	@Override
 	@Transactional
@@ -64,6 +65,11 @@ public class ItemServiceImpl implements ItemService {
 
 		if (request.getAvailable() == null) {
 			throw new DuplicateEmailException("Поле доступность должно быть указано");
+		}
+
+		if (request.getRequestId() != null) {
+			requestRepository.findById(request.getRequestId())
+					.orElseThrow(() -> new NotFoundException("Запрос с id = " + request.getRequestId() + " не найден"));
 		}
 
 		User foundUser = findUserById(ownerId);
@@ -173,9 +179,6 @@ public class ItemServiceImpl implements ItemService {
 	@Override
 	public List<ItemDto> findItemsByBooker(Long ownerId, String text) {
 		log.info("Получение списка вещей по тексту: {}", text);
-		if (StringUtils.isBlank(text)) {
-			return new ArrayList<>();
-		}
 		List<Item> items = itemRepository.findItemsByText(text);
 		log.info("Найдено {} вещей по тексту: {}", items.size(), text);
 
